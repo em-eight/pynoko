@@ -1,0 +1,15 @@
+import pynoko
+
+mkw = pynoko.KWhatever()
+mkw.configure(pynoko.Course.Luigi_Circuit, pynoko.Character.Funky_Kong, pynoko.Vehicle.Flame_Runner, False)
+mkw.init()
+print("MKW initialized")
+buttons = pynoko.buttonInput([pynoko.ACCELERATE])
+print(f"buttons: {buttons}")
+mkw.setInput(buttons, 0, 0, pynoko.Trick.NoTrick)
+print("MKW set input")
+mkw.calc()
+print("MKW frame stepped")
+print(mkw.kartObjectProxy())
+mkw.reset()
+print("MKW race reset")
