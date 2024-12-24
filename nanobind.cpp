@@ -74,11 +74,10 @@ struct HeapManager {
         //free(s_rootHeap);
     }
 };
-// _ctors/_dtors
-HeapManager heapMgr;
 
 class KHostSystem {
   EGG::SceneManager *m_sceneMgr;
+  HeapManager heapMgr;
 
 public:
   void configure(Course course, Character character, Vehicle vehicle, bool isAuto);
