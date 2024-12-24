@@ -14,12 +14,20 @@
 
 #include <host/SceneCreatorDynamic.hh>
 
-#include <pybind11/pybind11.h>
+/*#include <pybind11/pybind11.h>
 #include <pybind11/numpy.h>
 #include <pybind11/functional.h>
-#include <pybind11/stl.h>
+#include <pybind11/stl.h>*/
+#include <nanobind/nanobind.h>
+#include <nanobind/stl/vector.h>
+#include <nanobind/stl/string.h>
+#include <nanobind/ndarray.h>
 
-namespace py = pybind11;
+#include <sstream>
+
+//namespace py = pybind11;
+namespace nb = nanobind;
+using namespace nb::literals;
 
 using namespace System;
 using namespace Host;
@@ -70,7 +78,6 @@ struct HeapManager {
 HeapManager heapMgr;
 
 class KHostSystem {
-  KPadHostController controller;
   EGG::SceneManager *m_sceneMgr;
 
 public:
@@ -129,25 +136,25 @@ public:
     static constexpr int BRAKE = 0x2;
     static constexpr int ITEM = 0x4;
     static constexpr int DRIFT = 0x8;
-
-    static short encode_buttons(const std::vector<int>& buttons) {
-        short encoded = 0;
-        for (int button : buttons) {
-            encoded |= button;  // Combine the button values
-        }
-        return encoded;
-    }
 };
 
-PYBIND11_MODULE(pynoko, m) {
-    py::enum_<Trick>(m, "Trick")
+unsigned short encode_buttons(const std::vector<int>& buttons) {
+    unsigned short encoded = 0;
+    for (int button : buttons) {
+        encoded |= button;  // Combine the button values
+    }
+    return encoded;
+}
+
+NB_MODULE(pynoko, m) {
+    nb::enum_<Trick>(m, "Trick")
         .value("NoTrick", Trick::None)
         .value("Up", Trick::Up)
         .value("Down", Trick::Down)
         .value("Left", Trick::Left)
         .value("Right", Trick::Right);
 
-    py::enum_<Course>(m, "Course")
+    nb::enum_<Course>(m, "Course")
         .value("Mario_Circuit", Course::Mario_Circuit)
         .value("Moo_Moo_Meadows", Course::Moo_Moo_Meadows)
         .value("Mushroom_Gorge", Course::Mushroom_Gorge)
@@ -196,7 +203,7 @@ PYBIND11_MODULE(pynoko, m) {
         .value("Draw_Demo", Course::Draw_Demo)
         .value("Ending_Demo", Course::Ending_Demo);
 
-    py::enum_<Vehicle>(m, "Vehicle")
+    nb::enum_<Vehicle>(m, "Vehicle")
         .value("Standard_Kart_S", Vehicle::Standard_Kart_S)
         .value("Standard_Kart_M", Vehicle::Standard_Kart_M)
         .value("Standard_Kart_L", Vehicle::Standard_Kart_L)
@@ -235,7 +242,7 @@ PYBIND11_MODULE(pynoko, m) {
         .value("Phantom", Vehicle::Phantom)
         .value("Max", Vehicle::Max);
 
-    py::enum_<Character>(m, "Character")
+    nb::enum_<Character>(m, "Character")
         .value("Mario", Character::Mario)
         .value("Baby_Peach", Character::Baby_Peach)
         .value("Waluigi", Character::Waluigi)
@@ -286,12 +293,13 @@ PYBIND11_MODULE(pynoko, m) {
         .value("Rosalina_Biker_Outfit", Character::Rosalina_Biker_Outfit)
         .value("Max", Character::Max);
 
-    py::class_<EGG::Vector3f>(m, "Vector3f")
-        .def(py::init<>())  // Default constructor
-        .def(py::init<float, float, float>(), py::arg("x"), py::arg("y"), py::arg("z"))
-        .def_readwrite("x", &EGG::Vector3f::x)
-        .def_readwrite("y", &EGG::Vector3f::y)
-        .def_readwrite("z", &EGG::Vector3f::z)
+    using VecNumpy = nb::ndarray<float, nb::numpy, nb::shape<3>, nb::f_contig>;
+    nb::class_<EGG::Vector3f>(m, "Vector3f")
+        .def(nb::init<>())  // Default constructor
+        .def(nb::init<float, float, float>(), nb::arg("x"), nb::arg("y"), nb::arg("z"))
+        .def_rw("x", &EGG::Vector3f::x)
+        .def_rw("y", &EGG::Vector3f::y)
+        .def_rw("z", &EGG::Vector3f::z)
         .def("__repr__", [](const EGG::Vector3f &v) {
             return "<Vector3f(x=" + std::to_string(v.x) +
                    ", y=" + std::to_string(v.y) +
@@ -299,24 +307,24 @@ PYBIND11_MODULE(pynoko, m) {
         })
         .def("to_numpy", [](const EGG::Vector3f &v) {
             // Convert to a NumPy array
-            return py::array_t<float>({3}, {sizeof(float)}, &v.x);
-        })
-        .def_static("from_numpy", [](py::array_t<float> array) {
+            return VecNumpy(reinterpret_cast<void*>(const_cast<f32*>(&v.x)));
+        }, nb::rv_policy::reference_internal)
+        .def_static("from_numpy", [](VecNumpy array) {
             // Convert from a NumPy array
             if (array.size() != 3) {
                 throw std::runtime_error("NumPy array must have 3 elements");
             }
-            auto buf = array.unchecked<1>();
-            return EGG::Vector3f(buf(0), buf(1), buf(2));
+            return EGG::Vector3f(array(0), array(1), array(2));
         });
 
-    py::class_<EGG::Quatf>(m, "Quatf")
-        .def(py::init<>())
-        .def(py::init<float, float, float, float>(), py::arg("x"), py::arg("y"), py::arg("z"), py::arg("w"))
-        .def_property("x", [](EGG::Quatf &q) { return q.v.x; }, [](EGG::Quatf &q, float value) { q.v.x = value; })
-        .def_property("y", [](EGG::Quatf &q) { return q.v.y; }, [](EGG::Quatf &q, float value) { q.v.y = value; })
-        .def_property("z", [](EGG::Quatf &q) { return q.v.z; }, [](EGG::Quatf &q, float value) { q.v.z = value; })
-        .def_readwrite("w", &EGG::Quatf::w)
+    using QuatNumpy = nb::ndarray<float, nb::numpy, nb::shape<4>, nb::f_contig>;
+    nb::class_<EGG::Quatf>(m, "Quatf")
+        .def(nb::init<>())
+        .def(nb::init<float, float, float, float>(), nb::arg("x"), nb::arg("y"), nb::arg("z"), nb::arg("w"))
+        .def_prop_rw("x", [](EGG::Quatf &q) { return q.v.x; }, [](EGG::Quatf &q, float value) { q.v.x = value; })
+        .def_prop_rw("y", [](EGG::Quatf &q) { return q.v.y; }, [](EGG::Quatf &q, float value) { q.v.y = value; })
+        .def_prop_rw("z", [](EGG::Quatf &q) { return q.v.z; }, [](EGG::Quatf &q, float value) { q.v.z = value; })
+        .def_rw("w", &EGG::Quatf::w)
         .def("__repr__", [](const EGG::Quatf &q) {
             return "<Quatf(x=" + std::to_string(q.v.x) +
                    ", y=" + std::to_string(q.v.y) +
@@ -325,22 +333,21 @@ PYBIND11_MODULE(pynoko, m) {
         })
         .def("to_numpy", [](const EGG::Quatf &q) {
             // Convert to a NumPy array (x, y, z, w)
-            return py::array_t<float>({3}, {sizeof(float)}, &q.v.x);
-        })
-        .def_static("from_numpy", [](py::array_t<float> array) {
+            return QuatNumpy(reinterpret_cast<void*>(const_cast<f32*>(&q.v.x)));
+        }, nb::rv_policy::reference)
+        .def_static("from_numpy", [](QuatNumpy array) {
             // Convert from a NumPy array (x, y, z, w)
             if (array.size() != 4) {
                 throw std::runtime_error("NumPy array must have 4 elements");
             }
-            auto buf = array.unchecked<1>();
-            return EGG::Quatf(buf(3), buf(0), buf(1), buf(2));
+            return EGG::Quatf(array(3), array(0), array(1), array(2));
         });
 
     // I tried to make bindings for KartDynamics but turns out you can't bind polymorphic classes with RTTI off
     // due to missing typeinfo symbols...
     // So instead this stands as a reminder who has the same idea in the future
-    /*py::class_<Kart::KartDynamics>(m, "KartDynamics")
-        .def(py::init<>())  // Bind the constructor
+    /*nb::class_<Kart::KartDynamics>(m, "KartDynamics")
+        .def(nb::init<>())  // Bind the constructor
         .def("inv_inertia_tensor", &Kart::KartDynamics::invInertiaTensor, py::return_value_policy::reference_internal)
         .def("ang_vel_0_factor", &Kart::KartDynamics::angVel0Factor)
         .def("pos", &Kart::KartDynamics::pos, py::return_value_policy::reference_internal)
@@ -374,18 +381,18 @@ PYBIND11_MODULE(pynoko, m) {
             return oss.str();
         });*/
 
-    py::class_<Kart::KartObjectProxy>(m, "KartObjectProxy")
-        .def("pos", &Kart::KartObjectProxy::pos, py::return_value_policy::reference_internal)
-        .def("prev_pos", &Kart::KartObjectProxy::prevPos, py::return_value_policy::reference_internal)
-        .def("full_rot", &Kart::KartObjectProxy::fullRot, py::return_value_policy::reference_internal)
-        .def("ext_vel", &Kart::KartObjectProxy::extVel, py::return_value_policy::reference_internal)
-        .def("int_vel", &Kart::KartObjectProxy::intVel, py::return_value_policy::reference_internal)
-        .def("velocity", &Kart::KartObjectProxy::velocity, py::return_value_policy::reference_internal)
+    nb::class_<Kart::KartObjectProxy>(m, "KartObjectProxy")
+        .def("pos", &Kart::KartObjectProxy::pos, nb::rv_policy::reference)
+        .def("prev_pos", &Kart::KartObjectProxy::prevPos, nb::rv_policy::reference)
+        .def("full_rot", &Kart::KartObjectProxy::fullRot, nb::rv_policy::reference)
+        .def("ext_vel", &Kart::KartObjectProxy::extVel, nb::rv_policy::reference)
+        .def("int_vel", &Kart::KartObjectProxy::intVel, nb::rv_policy::reference)
+        .def("velocity", &Kart::KartObjectProxy::velocity, nb::rv_policy::reference)
         .def("speed", &Kart::KartObjectProxy::speed)
         .def("acceleration", &Kart::KartObjectProxy::acceleration)
         .def("soft_speed_limit", &Kart::KartObjectProxy::softSpeedLimit)
-        .def("main_rot", &Kart::KartObjectProxy::mainRot, py::return_value_policy::reference_internal)
-        .def("ang_vel_2", &Kart::KartObjectProxy::angVel2, py::return_value_policy::reference_internal)
+        .def("main_rot", &Kart::KartObjectProxy::mainRot, nb::rv_policy::reference)
+        .def("ang_vel_2", &Kart::KartObjectProxy::angVel2, nb::rv_policy::reference)
         .def("is_bike", &Kart::KartObjectProxy::isBike)
         .def("speed_ratio", &Kart::KartObjectProxy::speedRatio)
         .def("speed_ratio_capped", &Kart::KartObjectProxy::speedRatioCapped)
@@ -414,16 +421,16 @@ PYBIND11_MODULE(pynoko, m) {
     m.attr("ITEM") = ButtonInput::ITEM;
     m.attr("DRIFT") = ButtonInput::DRIFT;
 
-    m.def("buttonInput", &ButtonInput::encode_buttons, py::arg("buttons"),
+    m.def("buttonInput", encode_buttons, nb::arg("buttons"),
           "Encode an iterable of button values into a 2-byte signed short.");
 
-    py::class_<KHostSystem>(m, "KHostSystem")
-        .def(py::init<>())
+    nb::class_<KHostSystem>(m, "KHostSystem")
+        .def(nb::init<>())
         .def("configure", &KHostSystem::configure)
         .def("init", &KHostSystem::init)
         .def("setInput", &KHostSystem::setInput)
         .def("calc", &KHostSystem::calc)
         .def("reset", &KHostSystem::reset)
-        .def("kartObjectProxy", &KHostSystem::kartObjectProxy, py::return_value_policy::reference_internal)
+        .def("kartObjectProxy", &KHostSystem::kartObjectProxy, nb::rv_policy::reference)
         .def("raceCompletion", &KHostSystem::raceCompletion);
 }

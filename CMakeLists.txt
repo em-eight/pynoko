@@ -1,12 +1,12 @@
-cmake_minimum_required(VERSION 3.12)
+cmake_minimum_required(VERSION 3.18)
 project(mkw_rl VERSION 1.0)
 
 include(cmake/CPM.cmake)
 
 CPMAddPackage("gh:em-eight/Kinoko#c084989")
 
-find_package(Python 3.12 COMPONENTS Interpreter Development)
-add_subdirectory(extern/pybind11)
+find_package(Python COMPONENTS Interpreter Development.Module REQUIRED)
+add_subdirectory(extern/nanobind)
 
-pybind11_add_module(pynoko main.cpp)
+nanobind_add_module(pynoko nanobind.cpp)
 target_link_libraries(pynoko PRIVATE libkinoko)
