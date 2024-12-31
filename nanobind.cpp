@@ -78,6 +78,8 @@ struct HeapManager {
 class KHostSystem {
   EGG::SceneManager *m_sceneMgr;
   HeapManager heapMgr;
+  u16 buttonsPrev;
+  bool inDrift;
 
 public:
   void configure(Course course, Character character, Vehicle vehicle, bool isAuto);
@@ -102,13 +104,61 @@ void KHostSystem::init() {
     auto *sceneCreator = new SceneCreatorDynamic;
     m_sceneMgr = new EGG::SceneManager(sceneCreator);
 
-    //System::RaceConfig::RegisterInitCallback(std::bind(&KHostSystem::OnInit, this, std::placeholders::_1, std::placeholders::_2), nullptr);
-
     m_sceneMgr->changeScene(0);
+
+    buttonsPrev = 0;
+    inDrift = false;
+}
+
+class ButtonInput {
+public:
+    static constexpr int ACCELERATE = 0x1;
+    static constexpr int BRAKE = 0x2;
+    static constexpr int ITEM = 0x4;
+    static constexpr int DRIFT = 0x8;
+
+    static constexpr int KPAD_BUTTON_A = 0x1;
+    static constexpr int KPAD_BUTTON_B = 0x2;
+    static constexpr int KPAD_BUTTON_ITEM = 0x4;
+};
+
+unsigned short encode_buttons(const std::vector<int>& buttons) {
+    unsigned short encoded = 0;
+    for (int button : buttons) {
+        encoded |= button;  // Combine the button values
+    }
+    return encoded;
 }
 
 bool KHostSystem::setInput(u16 buttons, u8 stickXRaw, u8 stickYRaw, Trick trick) {
-    return KPadDirector::Instance()->hostController()->setInputsRawStick(buttons, stickXRaw, stickYRaw, trick);
+    u16 buttonsTrig = (buttons ^ buttonsPrev) & buttons;
+
+    u16 faceBtn = 0;
+    // face button logic
+    bool aBtnHeld = (buttons & ButtonInput::KPAD_BUTTON_A) != 0;
+    if (aBtnHeld) {
+        faceBtn = faceBtn | ButtonInput::ACCELERATE;
+    }
+    bool bBtnHeld = (buttons & ButtonInput::KPAD_BUTTON_B) != 0;
+    if (bBtnHeld) {
+        faceBtn = faceBtn | ButtonInput::BRAKE;
+    }
+    bool itemBtnHeld = (buttons & ButtonInput::KPAD_BUTTON_ITEM) != 0;
+    if (itemBtnHeld) {
+        faceBtn = faceBtn | ButtonInput::ITEM;
+    }
+    if (!bBtnHeld || !aBtnHeld) {
+        inDrift = false;
+    }
+    else if ((buttonsTrig & ButtonInput::KPAD_BUTTON_B) != 0) {
+        inDrift = true;
+    }
+    if (inDrift) {
+        faceBtn = faceBtn | ButtonInput::DRIFT;
+    }
+    buttonsPrev = buttons;
+
+    return KPadDirector::Instance()->hostController()->setInputsRawStick(faceBtn, stickXRaw, stickYRaw, trick);
 }
 
 void KHostSystem::calc() {
@@ -118,6 +168,9 @@ void KHostSystem::calc() {
 void KHostSystem::reset() {
     m_sceneMgr->destroyScene(m_sceneMgr->currentScene());
     m_sceneMgr->createScene(2, m_sceneMgr->currentScene());
+
+    buttonsPrev = 0;
+    inDrift = false;
 }
 
 const Kart::KartObjectProxy& KHostSystem::kartObjectProxy() {
@@ -127,22 +180,6 @@ const Kart::KartObjectProxy& KHostSystem::kartObjectProxy() {
 f32 KHostSystem::raceCompletion() {
     const auto &player = System::RaceManager::Instance()->player();
     return player.raceCompletion();
-}
-
-class ButtonInput {
-public:
-    static constexpr int ACCELERATE = 0x1;
-    static constexpr int BRAKE = 0x2;
-    static constexpr int ITEM = 0x4;
-    static constexpr int DRIFT = 0x8;
-};
-
-unsigned short encode_buttons(const std::vector<int>& buttons) {
-    unsigned short encoded = 0;
-    for (int button : buttons) {
-        encoded |= button;  // Combine the button values
-    }
-    return encoded;
 }
 
 NB_MODULE(pynoko, m) {
@@ -415,10 +452,9 @@ NB_MODULE(pynoko, m) {
             return oss.str();
         });
 
-    m.attr("ACCELERATE") = ButtonInput::ACCELERATE;
-    m.attr("BRAKE") = ButtonInput::BRAKE;
-    m.attr("ITEM") = ButtonInput::ITEM;
-    m.attr("DRIFT") = ButtonInput::DRIFT;
+    m.attr("KPAD_BUTTON_A") = ButtonInput::KPAD_BUTTON_A;
+    m.attr("KPAD_BUTTON_B") = ButtonInput::KPAD_BUTTON_B;
+    m.attr("KPAD_BUTTON_ITEM") = ButtonInput::KPAD_BUTTON_ITEM;
 
     m.def("buttonInput", encode_buttons, nb::arg("buttons"),
           "Encode an iterable of button values into a 2-byte signed short.");

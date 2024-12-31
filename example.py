@@ -4,7 +4,7 @@ mkw = pynoko.KHostSystem()
 mkw.configure(pynoko.Course.Luigi_Circuit, pynoko.Character.Funky_Kong, pynoko.Vehicle.Flame_Runner, False)
 mkw.init()
 print("MKW initialized")
-buttons = pynoko.buttonInput([pynoko.ACCELERATE])
+buttons = pynoko.buttonInput([pynoko.KPAD_BUTTON_A])
 print(f"buttons: {buttons}")
 
 for i in range(30000):
