@@ -10,14 +10,11 @@
 
 #include <game/kart/KartObjectManager.hh>
 #include <game/kart/KartDynamics.hh>
+#include <game/kart/KartState.hh>
 #include <game/system/RaceManager.hh>
 
 #include <host/SceneCreatorDynamic.hh>
 
-/*#include <pybind11/pybind11.h>
-#include <pybind11/numpy.h>
-#include <pybind11/functional.h>
-#include <pybind11/stl.h>*/
 #include <nanobind/nanobind.h>
 #include <nanobind/stl/vector.h>
 #include <nanobind/stl/string.h>
@@ -88,13 +85,19 @@ public:
   void calc();
   void reset();
   const Kart::KartObjectProxy& kartObjectProxy();
+  const System::RaceManager& raceManager();
   f32 raceCompletion();
 };
 
 void KHostSystem::configure(Course course, Character character, Vehicle vehicle, bool isAuto) {
     System::RaceConfig::RegisterInitCallback([course, character, vehicle, isAuto](System::RaceConfig *config, void *arg) {
-        config->raceScenario().players[0].type = System::RaceConfig::Player::Type::Local;
-        config->configure(course, character, vehicle, isAuto);
+        config->raceScenario().course = course;
+
+        System::RaceConfig::Player& player = config->raceScenario().players[0];
+        player.type = System::RaceConfig::Player::Type::Local;
+        player.character = character;
+        player.vehicle = vehicle;
+        player.driftIsAuto = isAuto;
     }, nullptr);
 }
 
@@ -175,6 +178,10 @@ void KHostSystem::reset() {
 
 const Kart::KartObjectProxy& KHostSystem::kartObjectProxy() {
     return *Kart::KartObjectManager::Instance()->object(0);
+}
+
+const System::RaceManager& KHostSystem::raceManager() {
+    return *System::RaceManager::Instance();
 }
 
 f32 KHostSystem::raceCompletion() {
@@ -417,7 +424,73 @@ NB_MODULE(pynoko, m) {
             return oss.str();
         });*/
 
+    nb::class_<Timer>(m, "Timer")
+        .def(nb::init<>())
+        .def(nb::init<u16, u8, u16>())
+        .def(nb::init<u32>())
+        .def("__eq__", &Timer::operator==)
+        .def("__ne__", &Timer::operator!=)
+        .def("__lt__", [](const Timer &self, const Timer &other) { return (self <=> other) < 0; })
+        .def("__le__", [](const Timer &self, const Timer &other) { return (self <=> other) <= 0; })
+        .def("__gt__", [](const Timer &self, const Timer &other) { return (self <=> other) > 0; })
+        .def("__ge__", [](const Timer &self, const Timer &other) { return (self <=> other) >= 0; })
+        .def("__sub__", &Timer::operator-)
+        .def("__add__", &Timer::operator+)
+        .def_rw("min", &Timer::min)
+        .def_rw("sec", &Timer::sec)
+        .def_rw("mil", &Timer::mil)
+        .def_rw("valid", &Timer::valid);
+
+    nb::class_<RaceManager::Player>(m, "Player")
+        .def("getLapSplit", &RaceManager::Player::getLapSplit)
+        .def("checkpointId", &RaceManager::Player::checkpointId)
+        .def("raceCompletion", &RaceManager::Player::raceCompletion)
+        .def("jugemId", &RaceManager::Player::jugemId)
+        .def("lapTimers", &RaceManager::Player::lapTimers, nb::rv_policy::reference)
+        .def("lapTimer", &RaceManager::Player::lapTimer, nb::rv_policy::reference)
+        .def("raceTimer", &RaceManager::Player::raceTimer, nb::rv_policy::reference);
+
+    nb::class_<System::RaceManager>(m, "RaceManager")
+        .def("player", &System::RaceManager::player, nb::rv_policy::reference)
+        .def("stage", &System::RaceManager::stage);
+
+    nb::enum_<System::RaceManager::Stage>(m, "Stage")
+        .value("Intro", System::RaceManager::Stage::Intro)
+        .value("Countdown", System::RaceManager::Stage::Countdown)
+        .value("Race", System::RaceManager::Stage::Race)
+        .value("FinishLocal", System::RaceManager::Stage::FinishLocal)
+        .value("FinishGlobal", System::RaceManager::Stage::FinishGlobal);
+
+    // Associate the Stage enum with RaceManager
+    m.attr("RaceManager").attr("Stage") = m.attr("Stage");
+
+    nb::class_<Kart::KartState>(m, "KartState")
+        .def("isDrifting", &Kart::KartState::isDrifting)
+        .def("isVehicleBodyFloorCollision", &Kart::KartState::isVehicleBodyFloorCollision)
+        .def("isAnyWheelCollision", &Kart::KartState::isAnyWheelCollision)
+        .def("isAllWheelsCollision", &Kart::KartState::isAllWheelsCollision)
+        .def("isStickyRoad", &Kart::KartState::isStickyRoad)
+        .def("isTouchingGround", &Kart::KartState::isTouchingGround)
+        .def("isChargeStartBoost", &Kart::KartState::isChargeStartBoost)
+        .def("isBoost", &Kart::KartState::isBoost)
+        .def("isMushroomBoost", &Kart::KartState::isMushroomBoost)
+        .def("isWheelie", &Kart::KartState::isWheelie)
+        .def("isRampBoost", &Kart::KartState::isRampBoost)
+        .def("isJumpPad", &Kart::KartState::isJumpPad)
+        .def("isInCannon", &Kart::KartState::isInCannon)
+        .def("isInATrick", &Kart::KartState::isInATrick)
+        .def("isBoostOffroadInvincibility", &Kart::KartState::isBoostOffroadInvincibility)
+        .def("isHalfPipeRamp", &Kart::KartState::isHalfPipeRamp)
+        .def("isOverZipper", &Kart::KartState::isOverZipper)
+        .def("isZipperBoost", &Kart::KartState::isZipperBoost)
+        .def("isZipperTrick", &Kart::KartState::isZipperTrick)
+        .def("isBurnout", &Kart::KartState::isBurnout)
+        .def("isTrickable", &Kart::KartState::isTrickable)
+        .def("isWheelieRot", &Kart::KartState::isWheelieRot)
+        .def("startBoostCharge", &Kart::KartState::startBoostCharge);
+
     nb::class_<Kart::KartObjectProxy>(m, "KartObjectProxy")
+        .def("state", static_cast<const Kart::KartState *(Kart::KartObjectProxy::*)() const>(&Kart::KartObjectProxy::state), nb::rv_policy::reference)
         .def("pos", &Kart::KartObjectProxy::pos, nb::rv_policy::reference)
         .def("prev_pos", &Kart::KartObjectProxy::prevPos, nb::rv_policy::reference)
         .def("full_rot", &Kart::KartObjectProxy::fullRot, nb::rv_policy::reference)
@@ -467,5 +540,6 @@ NB_MODULE(pynoko, m) {
         .def("calc", &KHostSystem::calc)
         .def("reset", &KHostSystem::reset)
         .def("kartObjectProxy", &KHostSystem::kartObjectProxy, nb::rv_policy::reference)
+        .def("raceManager", &KHostSystem::raceManager, nb::rv_policy::reference)
         .def("raceCompletion", &KHostSystem::raceCompletion);
 }

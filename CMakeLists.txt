@@ -16,7 +16,7 @@ endif()
 
 include(cmake/CPM.cmake)
 
-CPMAddPackage("gh:em-eight/Kinoko#154477c")
+CPMAddPackage("gh:em-eight/Kinoko#b16e187")
 
 find_package(Python COMPONENTS Interpreter Development.Module REQUIRED)
 add_subdirectory(extern/nanobind)
