@@ -395,6 +395,8 @@ NB_MODULE(pynoko, m) {
 
     nb::class_<Kart::KartMove> kartMove(m, "KartMove");
     kartMove
+        .def("kclSpeedFactor", &Kart::KartMove::kclSpeedFactor)
+        .def("kclRotFactor", &Kart::KartMove::kclRotFactor)
         .def("driftState", &Kart::KartMove::driftState)
         .def("mtCharge", &Kart::KartMove::mtCharge);
 
