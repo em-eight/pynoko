@@ -11,7 +11,9 @@
 #include <game/kart/KartObjectManager.hh>
 #include <game/kart/KartDynamics.hh>
 #include <game/kart/KartState.hh>
+#include <game/kart/KartMove.hh>
 #include <game/system/RaceManager.hh>
+#include <game/item/ItemDirector.hh>
 
 #include <host/SceneCreatorDynamic.hh>
 
@@ -386,43 +388,16 @@ NB_MODULE(pynoko, m) {
             return EGG::Quatf(array(3), array(0), array(1), array(2));
         });
 
-    // I tried to make bindings for KartDynamics but turns out you can't bind polymorphic classes with RTTI off
-    // due to missing typeinfo symbols...
-    // So instead this stands as a reminder who has the same idea in the future
-    /*nb::class_<Kart::KartDynamics>(m, "KartDynamics")
-        .def(nb::init<>())  // Bind the constructor
-        .def("inv_inertia_tensor", &Kart::KartDynamics::invInertiaTensor, py::return_value_policy::reference_internal)
-        .def("ang_vel_0_factor", &Kart::KartDynamics::angVel0Factor)
-        .def("pos", &Kart::KartDynamics::pos, py::return_value_policy::reference_internal)
-        .def("velocity", &Kart::KartDynamics::velocity, py::return_value_policy::reference_internal)
-        .def("gravity", &Kart::KartDynamics::gravity)
-        .def("int_vel", &Kart::KartDynamics::intVel, py::return_value_policy::reference_internal)
-        .def("main_rot", &Kart::KartDynamics::mainRot, py::return_value_policy::reference_internal)
-        .def("full_rot", &Kart::KartDynamics::fullRot, py::return_value_policy::reference_internal)
-        .def("total_force", &Kart::KartDynamics::totalForce, py::return_value_policy::reference_internal)
-        .def("ext_vel", &Kart::KartDynamics::extVel, py::return_value_policy::reference_internal)
-        .def("ang_vel_0", &Kart::KartDynamics::angVel0, py::return_value_policy::reference_internal)
-        .def("ang_vel_2", &Kart::KartDynamics::angVel2, py::return_value_policy::reference_internal)
-        .def("speed_fix", &Kart::KartDynamics::speedFix)
-        .def("__repr__", [](const Kart::KartDynamics &kd) {
-            auto vec3f_to_string = [](const EGG::Vector3f &v) {
-                return "(" + std::to_string(v.x) + ", " + std::to_string(v.y) + ", " + std::to_string(v.z) + ")";
-            };
-            auto quatf_to_string = [](const EGG::Quatf &q) {
-                return "(" + std::to_string(q.v.x) + ", " + std::to_string(q.v.y) + ", " + std::to_string(q.v.z) + ", " + std::to_string(q.w) + ")";
-            };
+    nb::class_<Kart::KartMove> kartMove(m, "KartMove");
+    kartMove
+        .def("driftState", &Kart::KartMove::driftState)
+        .def("mtCharge", &Kart::KartMove::mtCharge);
 
-            std::ostringstream oss;
-            oss << "<KartDynamics("
-                << "pos=" << vec3f_to_string(kd.pos()) << ", "
-                << "int_vel=" << vec3f_to_string(kd.intVel()) << ", "
-                << "ext_vel=" << vec3f_to_string(kd.extVel()) << ", "
-                << "main_rot=" << quatf_to_string(kd.mainRot()) << ", "  // Assuming Quatf has a Vector3f `v` for rotation
-                << "ang_vel0=" << vec3f_to_string(kd.angVel0()) << ", "
-                << "ang_vel2=" << vec3f_to_string(kd.angVel2())
-                << ")>";
-            return oss.str();
-        });*/
+    nb::enum_<Kart::KartMove::DriftState>(kartMove, "DriftState")
+        .value("NotDrifting", Kart::KartMove::DriftState::NotDrifting)
+        .value("ChargingMt", Kart::KartMove::DriftState::ChargingMt)
+        .value("ChargedMt", Kart::KartMove::DriftState::ChargedMt)
+        .value("ChargedSmt", Kart::KartMove::DriftState::ChargedSmt);
 
     nb::class_<Timer>(m, "Timer")
         .def(nb::init<>())
@@ -450,19 +425,28 @@ NB_MODULE(pynoko, m) {
         .def("lapTimer", &RaceManager::Player::lapTimer, nb::rv_policy::reference)
         .def("raceTimer", &RaceManager::Player::raceTimer, nb::rv_policy::reference);
 
-    nb::class_<System::RaceManager>(m, "RaceManager")
+    nb::class_<System::RaceManager> raceManager(m, "RaceManager");
+    raceManager
         .def("player", &System::RaceManager::player, nb::rv_policy::reference)
         .def("stage", &System::RaceManager::stage);
 
-    nb::enum_<System::RaceManager::Stage>(m, "Stage")
+    nb::enum_<System::RaceManager::Stage>(raceManager, "Stage")
         .value("Intro", System::RaceManager::Stage::Intro)
         .value("Countdown", System::RaceManager::Stage::Countdown)
         .value("Race", System::RaceManager::Stage::Race)
         .value("FinishLocal", System::RaceManager::Stage::FinishLocal)
         .value("FinishGlobal", System::RaceManager::Stage::FinishGlobal);
 
-    // Associate the Stage enum with RaceManager
-    m.attr("RaceManager").attr("Stage") = m.attr("Stage");
+    nb::class_<Item::ItemDirector>(m, "ItemDirector")
+        .def("itemInventory", &Item::ItemDirector::itemInventory);
+
+    nb::class_<Item::ItemInventory>(m, "ItemInventory")
+        .def("id", &Item::ItemInventory::id)
+        .def("currentCount", &Item::ItemInventory::currentCount);
+
+    nb::enum_<Item::ItemId>(m, "ItemId")
+        .value("TRIPLE_MUSHROOM", Item::ItemId::TRIPLE_MUSHROOM)
+        .value("NONE", Item::ItemId::NONE);
 
     nb::class_<Kart::KartState>(m, "KartState")
         .def("isDrifting", &Kart::KartState::isDrifting)
@@ -491,6 +475,7 @@ NB_MODULE(pynoko, m) {
 
     nb::class_<Kart::KartObjectProxy>(m, "KartObjectProxy")
         .def("state", static_cast<const Kart::KartState *(Kart::KartObjectProxy::*)() const>(&Kart::KartObjectProxy::state), nb::rv_policy::reference)
+        .def("move", static_cast<const Kart::KartMove *(Kart::KartObjectProxy::*)() const>(&Kart::KartObjectProxy::move), nb::rv_policy::reference)
         .def("pos", &Kart::KartObjectProxy::pos, nb::rv_policy::reference)
         .def("prev_pos", &Kart::KartObjectProxy::prevPos, nb::rv_policy::reference)
         .def("full_rot", &Kart::KartObjectProxy::fullRot, nb::rv_policy::reference)
