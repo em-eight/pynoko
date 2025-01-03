@@ -88,6 +88,7 @@ public:
   void reset();
   const Kart::KartObjectProxy& kartObjectProxy();
   const System::RaceManager& raceManager();
+  const Item::ItemDirector& itemDirector();
   f32 raceCompletion();
 };
 
@@ -184,6 +185,10 @@ const Kart::KartObjectProxy& KHostSystem::kartObjectProxy() {
 
 const System::RaceManager& KHostSystem::raceManager() {
     return *System::RaceManager::Instance();
+}
+
+const Item::ItemDirector& KHostSystem::itemDirector() {
+    return *Item::ItemDirector::Instance();
 }
 
 f32 KHostSystem::raceCompletion() {
@@ -526,5 +531,6 @@ NB_MODULE(pynoko, m) {
         .def("reset", &KHostSystem::reset)
         .def("kartObjectProxy", &KHostSystem::kartObjectProxy, nb::rv_policy::reference)
         .def("raceManager", &KHostSystem::raceManager, nb::rv_policy::reference)
+        .def("itemDirector", &KHostSystem::itemDirector, nb::rv_policy::reference)
         .def("raceCompletion", &KHostSystem::raceCompletion);
 }
