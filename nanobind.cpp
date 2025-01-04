@@ -46,6 +46,20 @@ static void FlushDenormalsToZero() {
 }
 #endif
 
+#if defined(__arm64__) || defined(__aarch64__)
+static void KeepDenormals() {
+    uint64_t fpcr;
+    asm("mrs %0,   fpcr" : "=r"(fpcr));
+    asm("msr fpcr, %0" ::"r"(fpcr & ~(1 << 24)));
+}
+#elif defined(__x86_64__) || defined(_M_X64) || defined(__i386__) || defined(_M_IX86)
+#include <immintrin.h>
+
+static void KeepDenormals() {
+    _MM_SET_DENORMALS_ZERO_MODE(_MM_DENORMALS_ZERO_OFF);
+}
+#endif
+
 static void *s_memorySpace = nullptr;
 static EGG::Heap *s_rootHeap = nullptr;
 static void InitMemory() {
@@ -114,6 +128,8 @@ void KHostSystem::init() {
 
     buttonsPrev = 0;
     inDrift = false;
+
+    KeepDenormals();
 }
 
 class ButtonInput {
@@ -168,15 +184,23 @@ bool KHostSystem::setInput(u16 buttons, u8 stickXRaw, u8 stickYRaw, Trick trick)
 }
 
 void KHostSystem::calc() {
+    FlushDenormalsToZero();
+
     m_sceneMgr->calc();
+
+    KeepDenormals();
 }
 
 void KHostSystem::reset() {
+    FlushDenormalsToZero();
+
     m_sceneMgr->destroyScene(m_sceneMgr->currentScene());
     m_sceneMgr->createScene(2, m_sceneMgr->currentScene());
 
     buttonsPrev = 0;
     inDrift = false;
+
+    KeepDenormals();
 }
 
 const Kart::KartObjectProxy& KHostSystem::kartObjectProxy() {
