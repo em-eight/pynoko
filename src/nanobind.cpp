@@ -24,6 +24,8 @@
 
 #include <sstream>
 
+#include "gfx/MkwVis.hpp"
+
 //namespace py = pybind11;
 namespace nb = nanobind;
 using namespace nb::literals;
@@ -94,7 +96,10 @@ class KHostSystem {
   u16 buttonsPrev;
   bool inDrift;
 
+  MkwVis* mkwVis;
+
 public:
+  ~KHostSystem() { mkwVis->destroyWindow(); }
   void configure(Course course, Character character, Vehicle vehicle, bool isAuto);
   void init();
   bool setInput(u16 buttons, u8 stickXRaw, u8 stickYRaw, Trick trick);
@@ -130,6 +135,10 @@ void KHostSystem::init() {
     inDrift = false;
 
     KeepDenormals();
+
+    mkwVis = new MkwVis(Field::CourseColMgr::Instance()->data());
+    mkwVis->createWindow(1200, 800);
+    mkwVis->load();
 }
 
 class ButtonInput {
@@ -189,6 +198,11 @@ void KHostSystem::calc() {
     m_sceneMgr->calc();
 
     KeepDenormals();
+
+    mkwVis->update();
+    const Kart::KartObjectProxy& proxy = kartObjectProxy();
+    mkwVis->setPose(proxy.pos(), proxy.mainRot());
+    mkwVis->draw();
 }
 
 void KHostSystem::reset() {

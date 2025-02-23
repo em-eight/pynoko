@@ -17,10 +17,30 @@ endif()
 include(cmake/CPM.cmake)
 
 set(KINOKO_USE_RTTI ON)
-CPMAddPackage("gh:em-eight/Kinoko#28b94a8")
+CPMAddPackage("gh:em-eight/Kinoko#26ab0aa")
 
 find_package(Python COMPONENTS Interpreter Development.Module REQUIRED)
 add_subdirectory(extern/nanobind)
 
-nanobind_add_module(pynoko nanobind.cpp)
-target_link_libraries(pynoko PRIVATE libkinoko)
+find_package(glfw3 REQUIRED)
+
+set(PYNOKO_SOURCES
+    src/nanobind.cpp
+
+    src/gfx/KclOpengl.cpp
+    src/gfx/MkwVis.cpp
+    src/gfx/Shader.cpp
+    src/gfx/Camera.cpp
+    src/gfx/Color.cpp
+    src/gfx/glad/glad.c
+
+    src/math/Matrix.cpp
+
+)
+
+nanobind_add_module(pynoko ${PYNOKO_SOURCES})
+target_include_directories(pynoko
+    PRIVATE
+    src
+)
+target_link_libraries(pynoko PRIVATE libkinoko glfw)
