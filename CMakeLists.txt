@@ -36,6 +36,7 @@ set(PYNOKO_SOURCES
 
     src/math/Matrix.cpp
 
+    src/util/Filesystem.cpp
 )
 
 nanobind_add_module(pynoko ${PYNOKO_SOURCES})

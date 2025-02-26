@@ -1,18 +1,17 @@
 #include <Common.hh>
 
-#include <game/system/KPadDirector.hh>
-#include <game/system/RaceConfig.hh>
-
 #include <egg/math/Vector.hh>
 #include <egg/math/Quat.hh>
 #include <egg/core/ExpHeap.hh>
 #include <egg/core/SceneManager.hh>
 
+#include <game/system/KPadDirector.hh>
+#include <game/system/RaceConfig.hh>
+#include <game/system/RaceManager.hh>
 #include <game/kart/KartObjectManager.hh>
 #include <game/kart/KartDynamics.hh>
 #include <game/kart/KartState.hh>
 #include <game/kart/KartMove.hh>
-#include <game/system/RaceManager.hh>
 #include <game/item/ItemDirector.hh>
 
 #include <host/SceneCreatorDynamic.hh>
@@ -25,6 +24,7 @@
 #include <sstream>
 
 #include "gfx/MkwVis.hpp"
+#include "util/Filesystem.hpp"
 
 //namespace py = pybind11;
 namespace nb = nanobind;
@@ -96,11 +96,17 @@ class KHostSystem {
   u16 buttonsPrev;
   bool inDrift;
 
+  const u8 *currentRawGhost = nullptr; // TODO: figure out lifetime
+
   MkwVis* mkwVis;
 
 public:
   ~KHostSystem() { mkwVis->destroyWindow(); }
-  void configure(Course course, Character character, Vehicle vehicle, bool isAuto);
+
+  // call one of the following functions before init to select a mode
+  void configureTimeTrial(Course course, Character character, Vehicle vehicle, bool isAuto);
+  void configureGhost(const char* rkgFile);
+
   void init();
   bool setInput(u16 buttons, u8 stickXRaw, u8 stickYRaw, Trick trick);
   void calc();
@@ -111,7 +117,7 @@ public:
   f32 raceCompletion();
 };
 
-void KHostSystem::configure(Course course, Character character, Vehicle vehicle, bool isAuto) {
+void KHostSystem::configureTimeTrial(Course course, Character character, Vehicle vehicle, bool isAuto) {
     System::RaceConfig::RegisterInitCallback([course, character, vehicle, isAuto](System::RaceConfig *config, void *arg) {
         config->raceScenario().course = course;
 
@@ -120,6 +126,17 @@ void KHostSystem::configure(Course course, Character character, Vehicle vehicle,
         player.character = character;
         player.vehicle = vehicle;
         player.driftIsAuto = isAuto;
+    }, nullptr);
+}
+
+void KHostSystem::configureGhost(const char* rkgFile) {
+    if (currentRawGhost != nullptr) delete currentRawGhost;
+    unsigned int ghostSize;
+    currentRawGhost = (u8*)util::loadFile(rkgFile, ghostSize);
+
+    System::RaceConfig::RegisterInitCallback([this](System::RaceConfig *config, void *arg) {
+        config->setGhost(this->currentRawGhost);
+        config->raceScenario().players[0].type = System::RaceConfig::Player::Type::Ghost;
     }, nullptr);
 }
 
@@ -564,7 +581,8 @@ NB_MODULE(pynoko, m) {
 
     nb::class_<KHostSystem>(m, "KHostSystem")
         .def(nb::init<>())
-        .def("configure", &KHostSystem::configure)
+        .def("configureTimeTrial", &KHostSystem::configureTimeTrial)
+        .def("configureGhost", &KHostSystem::configureGhost)
         .def("init", &KHostSystem::init)
         .def("setInput", &KHostSystem::setInput)
         .def("calc", &KHostSystem::calc)

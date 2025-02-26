@@ -1,7 +1,8 @@
 import pynoko
 
 mkw = pynoko.KHostSystem()
-mkw.configure(pynoko.Course.Luigi_Circuit, pynoko.Character.Funky_Kong, pynoko.Vehicle.Flame_Runner, False)
+mkw.configureTimeTrial(pynoko.Course.Bowsers_Castle, pynoko.Character.Funky_Kong, pynoko.Vehicle.Flame_Runner, False)
+#mkw.configureGhost("/path/to/ghost.rkg")
 mkw.init()
 print("MKW initialized")
 buttons = pynoko.buttonInput([pynoko.KPAD_BUTTON_A])

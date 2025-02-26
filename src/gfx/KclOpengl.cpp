@@ -62,27 +62,27 @@ void KclOpengl::draw() {
 }
 
 const gfx::Color colorTable[] = {
-    gfx::randomBrightColor(1.5f),
-    gfx::randomBrightColor(1.5f),
-    gfx::randomBrightColor(1.5f),
-    gfx::randomBrightColor(1.5f),
-    gfx::randomBrightColor(1.5f),
-    gfx::randomBrightColor(1.5f),
-    gfx::randomBrightColor(1.5f),
-    gfx::randomBrightColor(1.5f),
-    gfx::randomBrightColor(1.5f),
-    gfx::randomBrightColor(1.5f),
-    gfx::randomBrightColor(1.5f),
-    gfx::randomBrightColor(1.5f),
-    gfx::randomBrightColor(1.5f),
-    gfx::randomBrightColor(1.5f),
-    gfx::randomBrightColor(1.5f),
-    gfx::randomBrightColor(1.5f),
+    gfx::Color(0.9f, 0.9f, 0.9f, 1.0f),      // 0x0 road
+    gfx::Color(0.0f, 0.5f, 0.5f, 1.0f),      // 0x1 slippery road (no slow down)
+    gfx::Color(1.0f, 0.85f, 0.3f, 1.0f),     // 0x2 weak off-road road
+    gfx::Color(0.2f, 0.45f, 0.15f, 1.0f),    // 0x3 off-road road
+    gfx::Color(0.5f, 0.25f, 0.0f, 1.0f),     // 0x4 heavy off-road road
+    gfx::Color(0.05f, 0.6f, 0.95f, 1.0f),    // 0x5 slippery road road (slowdown)
+    gfx::Color(1.0f, 0.3f, 0.0f, 1.0f),      // 0x6 boost
+    gfx::Color(1.0f, 0.6f, 0.1f, 1.0f),      // 0x7 boost ramp
+    gfx::Color(1.0f, 0.85f, 0.1f, 1.0f),     // 0x8 jump ramp
+    gfx::Color(1.0f, 0.85f, 0.1f, 1.0f),     // 0x9 item road
+    gfx::Color(0.25f, 0.1f, 0.0f, 1.0f),     // 0xA Solid fall
+    gfx::Color(0.0f, 0.1f, 1.0f, 1.0f),      // 0xB Moving water
+    gfx::Color(0.5f, 0.5f, 0.5f, 1.0f),      // 0xC Wall
+    gfx::Color(0.75f, 0.75f, 0.75f, 1.0f),   // 0xD Invisible wall
+    gfx::Color(0.85f, 0.85f, 0.75f, 1.0f),   // 0xE Item wall
+    gfx::Color(0.5f, 0.5f, 0.5f, 1.0f),      // 0xF Wall 2
 
-    gfx::randomBrightColor(1.0f),
-    gfx::randomBrightColor(1.0f),
-    gfx::randomBrightColor(1.0f),
-    gfx::randomBrightColor(1.0f),
+    gfx::Color(0.75f, 0.25f, 0.7f, 1.0f),    // 0x10 Fall boundary
+    gfx::Color(0.65f, 0.4f, 0.5f, 1.0f),     // 0x11 Cannon trigger
+    gfx::Color(0.65f, 0.4f, 0.5f, 1.0f),     // 0x12 Force recalculation
+    gfx::Color(1.0f, 0.6f, 0.1f, 1.0f),      // 0x13 Half-pipe ramp
     gfx::randomBrightColor(1.0f),
     gfx::randomBrightColor(1.0f),
     gfx::randomBrightColor(1.0f),
