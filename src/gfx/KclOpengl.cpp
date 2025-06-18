@@ -98,7 +98,10 @@ const gfx::Color colorTable[] = {
 };
 
 void KclOpengl::processData() {
+    int i = 0;
     for (const auto& prism : m_prisms) {
+        i++;
+        if (i == 1) continue;
         const EGG::Vector3f &vtx1 = m_vertices[prism.pos_i];
         const EGG::Vector3f &fnrm = m_nrms[prism.fnrm_i];
         const EGG::Vector3f &enrm1 = m_nrms[prism.enrm1_i];

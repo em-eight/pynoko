@@ -17,7 +17,7 @@ endif()
 include(cmake/CPM.cmake)
 
 set(KINOKO_USE_RTTI ON)
-CPMAddPackage("gh:em-eight/Kinoko#26ab0aa")
+CPMAddPackage("gh:em-eight/Kinoko#a3e1e73")
 
 find_package(Python COMPONENTS Interpreter Development.Module REQUIRED)
 add_subdirectory(extern/nanobind)
