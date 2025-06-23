@@ -1,0 +1,11 @@
+@PACKAGE_INIT@
+
+set(_bolt_supported_components math gfx)
+
+foreach(_comp ${bolt_FIND_COMPONENTS})
+  if (NOT _comp IN_LIST _bolt_supported_components)
+    set(bolt_FOUND False)
+    set(bolt_NOT_FOUND_MESSAGE "Unsupported component: ${_comp}")
+  endif()
+  include("${CMAKE_CURRENT_LIST_DIR}/bolt${_comp}Targets.cmake")
+endforeach()

@@ -23,8 +23,8 @@
 
 #include <sstream>
 
-#include "gfx/MkwVis.hpp"
 #include "util/Filesystem.hpp"
+#include "libmkw/MkwVis.hpp"
 
 //namespace py = pybind11;
 namespace nb = nanobind;
@@ -132,7 +132,7 @@ void KHostSystem::configureTimeTrial(Course course, Character character, Vehicle
 void KHostSystem::configureGhost(const char* rkgFile) {
     if (currentRawGhost != nullptr) delete currentRawGhost;
     unsigned int ghostSize;
-    currentRawGhost = (u8*)util::loadFile(rkgFile, ghostSize);
+    currentRawGhost = (u8*)bolt::util::Filesystem::loadFile(rkgFile, ghostSize);
 
     System::RaceConfig::RegisterInitCallback([this](System::RaceConfig *config, void *arg) {
         config->setGhost(this->currentRawGhost);
