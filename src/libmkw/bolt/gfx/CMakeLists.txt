@@ -1,9 +1,5 @@
 project(bolt_gfx)
 
-# Try to find system Assimp
-# TODO: should not be a requirement I think
-find_package(assimp REQUIRED)
-
 add_subdirectory(vendored/glad)
 
 set(gfx_SRC
@@ -12,8 +8,6 @@ set(gfx_SRC
     src/DrawableTriangle.cpp
     src/DrawableArrow.cpp
     src/PhongDrawable.cpp
-    src/DrawableMesh.cpp
-    src/DrawableModel.cpp
     src/Drawable.cpp
     src/DrawableManager.cpp
     src/Camera.cpp
@@ -33,7 +27,7 @@ target_include_directories(gfx
     PRIVATE
     vendored/stb
 )
-target_link_libraries(gfx PRIVATE assimp::assimp bolt::math PUBLIC bolt::util glad)
+target_link_libraries(gfx PRIVATE bolt::math PUBLIC bolt::util glad)
 target_compile_definitions(gfx PRIVATE BOLT_GFX_ROOT="${PROJECT_SOURCE_DIR}")
 
 install(TARGETS gfx glad
