@@ -18,6 +18,7 @@ if(NOT CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
 endif()
 
 include(cmake/CPM.cmake)
+include(GNUInstallDirs)
 
 set(KINOKO_USE_RTTI ON)
 CPMAddPackage("gh:em-eight/Kinoko#53d0116")

@@ -49,7 +49,7 @@ void MkwVis::createWindow(int width, int height) {
 
     // debug
     glEnable(GL_DEBUG_OUTPUT);
-    glDebugMessageCallback(openGLDebugCallback, nullptr);
+    //glDebugMessageCallback(openGLDebugCallback, nullptr);
 
     glfwGetFramebufferSize(mWindow, &mWidth, &mHeight);
     glViewport(0, 0, width, height);
