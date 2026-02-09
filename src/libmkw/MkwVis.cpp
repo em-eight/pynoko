@@ -58,7 +58,7 @@ void MkwVis::createWindow(int width, int height) {
 
 void MkwVis::load() {
     mCamera = new RaceCamera(mWidth / (float)mHeight);
-    mKclOgl = new KclOpengl(mKcl->m_prisms, mKcl->m_vertices, mKcl->m_nrms);
+    mKclOgl = new KclOpengl(mKcl->prisms(), mKcl->vertices(), mKcl->nrms());
     mKclOgl->load();
 }
 
