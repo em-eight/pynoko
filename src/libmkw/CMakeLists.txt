@@ -1,4 +1,5 @@
 add_subdirectory(bolt EXCLUDE_FROM_ALL)
+add_subdirectory(extern/glfw EXCLUDE_FROM_ALL)
 
 find_package(glfw3 REQUIRED)
 
