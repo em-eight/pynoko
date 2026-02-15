@@ -6,5 +6,5 @@ add_library(libmkw
     MkwVis.cpp
     RaceCamera.cpp
 )
-target_link_libraries(libmkw PRIVATE libkinoko glfw PUBLIC bolt::gfx bolt::math)
+target_link_libraries(libmkw PUBLIC bolt::gfx bolt::math glfw libkinoko)
 target_compile_definitions(libmkw PRIVATE LIBMKW_ROOT="${CMAKE_CURRENT_SOURCE_DIR}")
