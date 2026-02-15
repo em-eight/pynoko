@@ -11,7 +11,7 @@
 
 class MkwVis {
 public:
-    MkwVis(Field::KColData* kcl) : mKcl(kcl) {}
+    MkwVis(const Field::KColData* kcl) : mKcl(kcl) {}
     ~MkwVis();
     void createWindow(int width, int height);
     // call once to load graphics
@@ -27,7 +27,7 @@ public:
 private:
     RaceCamera* mCamera;
     KclOpengl* mKclOgl;
-    Field::KColData* mKcl;
+    const Field::KColData* mKcl;
 
     GLFWwindow* mWindow;
     int mWidth;
