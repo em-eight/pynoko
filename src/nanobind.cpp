@@ -27,7 +27,6 @@
 #include "util/Filesystem.hpp"
 #include "libmkw/MkwVis.hpp"
 
-//namespace py = pybind11;
 namespace nb = nanobind;
 using namespace nb::literals;
 
