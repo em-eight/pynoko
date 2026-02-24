@@ -12,9 +12,7 @@ def main(args):
 
     for i in range(30000):
         mkw.setInput(buttons, 7, 0, pynoko.Trick.NoTrick)
-        #print("MKW set input")
         mkw.calc()
-        #print("MKW frame stepped")
         print(mkw.kartObjectProxy())
         print(mkw.raceCompletion())
     mkw.reset()
