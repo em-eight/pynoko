@@ -43,17 +43,35 @@ include(GNUInstallDirs)
 set(KINOKO_USE_RTTI ON)
 CPMAddPackage("gh:em-eight/Kinoko#867dc3f")
 
-find_package(Python COMPONENTS Interpreter Development.Module REQUIRED)
-add_subdirectory(extern/nanobind)
-add_subdirectory(src/libmkw)
+find_package(Python REQUIRED COMPONENTS Interpreter Development.Module OPTIONAL_COMPONENTS Development.SABIModule)
+find_package(nanobind CONFIG REQUIRED)
+add_subdirectory(src/libmkw EXCLUDE_FROM_ALL)
 
 set(PYNOKO_SOURCES
     src/nanobind.cpp
 )
 
-nanobind_add_module(pynoko src/nanobind.cpp)
-target_include_directories(pynoko
+nanobind_add_module(
+    _pynoko_impl
+    STABLE_ABI
+    src/nanobind.cpp
+)
+target_include_directories(_pynoko_impl
     PRIVATE
     src
 )
-target_link_libraries(pynoko PRIVATE libkinoko libmkw)
+target_link_libraries(_pynoko_impl PRIVATE libkinoko libmkw)
+# installation directives for python wheels
+if(APPLE)
+    set_target_properties(_pynoko_impl PROPERTIES
+        INSTALL_RPATH "@loader_path"
+        BUILD_WITH_INSTALL_RPATH TRUE
+    )
+else()
+    set_target_properties(_pynoko_impl PROPERTIES
+        INSTALL_RPATH "$ORIGIN"
+        BUILD_WITH_INSTALL_RPATH TRUE
+    )
+endif()
+install(TARGETS _pynoko_impl LIBRARY DESTINATION pynoko)
+install(TARGETS libkinoko LIBRARY DESTINATION pynoko)
