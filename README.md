@@ -12,6 +12,7 @@ git submodule update --init --recursive
 ```
 
 # Building
+Note: if you want to build the wheels or Release builds, only clang is supported. If you want to use gcc, specify `-DCMAKE_BUILD_TYPE=Debug`
 ## Local build
 ```
 cmake -B build -DCMAKE_BUILD_TYPE=Release

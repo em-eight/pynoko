@@ -5,16 +5,6 @@ set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
 # Function: pick GCC or Clang, ignore MSVC
 function(pick_gcc_or_clang out_c out_cxx)
-    # Detect GCC
-    find_program(GCC gcc)
-    find_program(GPP g++)
-    if(GCC AND GPP)
-        message(STATUS "Using GCC: ${GCC}, ${GPP}")
-        set(${out_c} "${GCC}" PARENT_SCOPE)
-        set(${out_cxx} "${GPP}" PARENT_SCOPE)
-        return()
-    endif()
-
     # Detect Clang
     find_program(CLANG clang)
     find_program(CLANGXX clang++)
@@ -22,6 +12,16 @@ function(pick_gcc_or_clang out_c out_cxx)
         message(STATUS "Using Clang: ${CLANG}, ${CLANGXX}")
         set(${out_c} "${CLANG}" PARENT_SCOPE)
         set(${out_cxx} "${CLANGXX}" PARENT_SCOPE)
+        return()
+    endif()
+
+    # Detect GCC
+    find_program(GCC gcc)
+    find_program(GPP g++)
+    if(GCC AND GPP)
+        message(STATUS "Using GCC: ${GCC}, ${GPP}")
+        set(${out_c} "${GCC}" PARENT_SCOPE)
+        set(${out_cxx} "${GPP}" PARENT_SCOPE)
         return()
     endif()
 

@@ -22,6 +22,10 @@ wheel.py-api = "cp312"
 
 [tool.scikit-build.cmake]
 args = [
-    "-DCMAKE_BUILD_TYPE=Debug",
+    "-DCMAKE_BUILD_TYPE=Release",
     "-DPYNOKO_BUILD_GUI=OFF",
 ]
+
+[tool.cibuildwheel.linux]
+before-build = "yum install -y clang"
+environment = { CC="clang", CXX="clang++" }
