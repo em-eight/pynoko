@@ -5,7 +5,7 @@ on:
   pull_request:
   push:
     branches:
-     - wheel_wip
+     - main
 
 jobs:
   build_sdist:

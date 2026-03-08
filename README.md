@@ -12,9 +12,17 @@ git submodule update --init --recursive
 ```
 
 # Building
+## Local build
 ```
 cmake -B build -DCMAKE_BUILD_TYPE=Release
 cmake --build build
+
+```
+
+## Build and install wheel
+Physics engine only. Wheel builds currently do not support GUI visualization.
+```
+pip install .
 ```
 
 # Usage

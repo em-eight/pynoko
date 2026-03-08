@@ -288,7 +288,7 @@ f32 KHostSystem::raceCompletion() {
     return player.raceCompletion();
 }
 
-NB_MODULE(_pynoko_impl, m) {
+NB_MODULE(PYNOKO_MODULE_NAME, m) {
     nb::enum_<Trick>(m, "Trick")
         .value("NoTrick", Trick::None)
         .value("Up", Trick::Up)

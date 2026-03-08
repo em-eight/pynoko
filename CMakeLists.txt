@@ -45,8 +45,15 @@ option(PYNOKO_BUILD_GUI "Build with GUI (glfw) support" ON)
 set(KINOKO_USE_RTTI ON)
 CPMAddPackage("gh:em-eight/Kinoko#9d1cff7")
 
-find_package(Python REQUIRED COMPONENTS Interpreter Development.Module OPTIONAL_COMPONENTS Development.SABIModule)
-find_package(nanobind CONFIG REQUIRED)
+if (NOT SKBUILD)
+    # local build
+    find_package(Python COMPONENTS Interpreter Development.Module REQUIRED)
+    add_subdirectory(extern/nanobind EXCLUDE_FROM_ALL)
+else()
+    # scikit-build (wheel build)
+    find_package(Python REQUIRED COMPONENTS Interpreter Development.Module OPTIONAL_COMPONENTS Development.SABIModule)
+    find_package(nanobind CONFIG REQUIRED)
+endif()
 
 if (PYNOKO_BUILD_GUI)
     add_subdirectory(src/libmkw EXCLUDE_FROM_ALL)
@@ -56,27 +63,36 @@ set(PYNOKO_SOURCES
     src/nanobind.cpp
 )
 
+if (NOT SKBUILD)
+    set(PYNOKO_MODULE_NAME pynoko)
+else()
+    set(PYNOKO_MODULE_NAME _pynoko_impl)
+endif()
+
 nanobind_add_module(
-    _pynoko_impl
+    ${PYNOKO_MODULE_NAME}
     STABLE_ABI
     src/nanobind.cpp
 )
-target_include_directories(_pynoko_impl
+target_include_directories(${PYNOKO_MODULE_NAME}
     PRIVATE
     src
 )
-target_link_libraries(_pynoko_impl PRIVATE libkinoko)
+target_link_libraries(${PYNOKO_MODULE_NAME} PRIVATE libkinoko)
 if(PYNOKO_BUILD_GUI)
-    target_link_libraries(_pynoko_impl PRIVATE libmkw)
-    target_compile_definitions(_pynoko_impl PRIVATE PYNOKO_BUILD_GUI)
+    target_link_libraries(${PYNOKO_MODULE_NAME} PRIVATE libmkw)
+    target_compile_definitions(${PYNOKO_MODULE_NAME} PRIVATE PYNOKO_BUILD_GUI)
 endif()
+target_compile_definitions(${PYNOKO_MODULE_NAME} PRIVATE PYNOKO_MODULE_NAME=${PYNOKO_MODULE_NAME})
 
-# installation directives for python wheels
-if(UNIX AND NOT APPLE)
-    set_target_properties(_pynoko_impl PROPERTIES
-        INSTALL_RPATH "$ORIGIN"
-        BUILD_WITH_INSTALL_RPATH TRUE
-    )
+if (SKBUILD)
+    # installation directives for python wheels
+    if(UNIX AND NOT APPLE)
+        set_target_properties(${PYNOKO_MODULE_NAME} PROPERTIES
+            INSTALL_RPATH "$ORIGIN"
+            BUILD_WITH_INSTALL_RPATH TRUE
+        )
+    endif()
+    install(TARGETS ${PYNOKO_MODULE_NAME} LIBRARY DESTINATION pynoko)
+    install(TARGETS libkinoko LIBRARY DESTINATION pynoko)
 endif()
-install(TARGETS _pynoko_impl LIBRARY DESTINATION pynoko)
-install(TARGETS libkinoko LIBRARY DESTINATION pynoko)
