@@ -76,8 +76,13 @@ jobs:
         if: matrix.os == 'windows-latest'
         shell: msys2 {0}
         run: |
-          export CC=${{ matrix.compiler }}
-          export CXX=${{ matrix.compiler }}++
+          if [ "${{ matrix.compiler }}" = "gcc" ]; then
+            export CC=gcc
+            export CXX=g++
+          else
+            export CC=clang
+            export CXX=clang++
+          fi
 
           cmake -S . -B build \
             -G Ninja \

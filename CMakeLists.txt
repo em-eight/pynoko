@@ -3,39 +3,15 @@ cmake_minimum_required(VERSION 3.18)
 # We are building a shared object, so all subdirs should build with PIC in mind
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
-# Function: pick GCC or Clang, ignore MSVC
-function(pick_gcc_or_clang out_c out_cxx)
-    # Detect Clang
-    find_program(CLANG clang)
-    find_program(CLANGXX clang++)
-    if(CLANG AND CLANGXX)
-        message(STATUS "Using Clang: ${CLANG}, ${CLANGXX}")
-        set(${out_c} "${CLANG}" PARENT_SCOPE)
-        set(${out_cxx} "${CLANGXX}" PARENT_SCOPE)
-        return()
-    endif()
-
-    # Detect GCC
-    find_program(GCC gcc)
-    find_program(GPP g++)
-    if(GCC AND GPP)
-        message(STATUS "Using GCC: ${GCC}, ${GPP}")
-        set(${out_c} "${GCC}" PARENT_SCOPE)
-        set(${out_cxx} "${GPP}" PARENT_SCOPE)
-        return()
-    endif()
-
-    # No suitable compiler found
-    message(FATAL_ERROR "No supported compiler found. Only GCC or Clang are supported. Don't even think about using MSVC")
-endfunction()
-
-# Pick compiler before project()
-pick_gcc_or_clang(C_COMPILER CXX_COMPILER)
-
-set(CMAKE_C_COMPILER ${C_COMPILER} CACHE STRING "C compiler" FORCE)
-set(CMAKE_CXX_COMPILER ${CXX_COMPILER} CACHE STRING "C++ compiler" FORCE)
-
 project(pynoko VERSION 1.0 LANGUAGES C CXX)
+
+# Define supported compilers
+set(SUPPORTED_COMPILERS "GNU" "Clang" "AppleClang")
+if(NOT CMAKE_CXX_COMPILER_ID IN_LIST SUPPORTED_COMPILERS)
+    message(FATAL_ERROR
+        "Unsupported compiler: ${CMAKE_CXX_COMPILER_ID}\n"
+        "This project requires GCC or Clang.\n")
+endif()
 
 include(cmake/CPM.cmake)
 include(GNUInstallDirs)
@@ -43,7 +19,7 @@ include(GNUInstallDirs)
 option(PYNOKO_BUILD_GUI "Build with GUI (glfw) support" ON)
 
 set(KINOKO_USE_RTTI ON)
-CPMAddPackage("gh:em-eight/Kinoko#b58c234")
+CPMAddPackage("gh:em-eight/Kinoko#158386a")
 
 if (NOT SKBUILD)
     # local build
