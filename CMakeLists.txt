@@ -43,7 +43,7 @@ include(GNUInstallDirs)
 option(PYNOKO_BUILD_GUI "Build with GUI (glfw) support" ON)
 
 set(KINOKO_USE_RTTI ON)
-CPMAddPackage("gh:em-eight/Kinoko#9d1cff7")
+CPMAddPackage("gh:em-eight/Kinoko#b58c234")
 
 if (NOT SKBUILD)
     # local build
