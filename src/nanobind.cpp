@@ -23,15 +23,44 @@
 #include <nanobind/ndarray.h>
 
 #include <sstream>
+#include <filesystem>
+#include <fstream>
+#include <iostream>
 
-#include "util/Filesystem.hpp"
+#ifdef PYNOKO_BUILD_GUI
 #include "libmkw/MkwVis.hpp"
+#include "util/Filesystem.hpp"
+#endif
+
+#define RUNTIME_CHECK(condition, message) \
+    do { \
+        if (!(condition)) { \
+            std::cerr << "Runtime assertion failed: " << message << std::endl; \
+            std::terminate(); \
+        } \
+    } while(0)
 
 namespace nb = nanobind;
 using namespace nb::literals;
 
 using namespace System;
 using namespace Host;
+
+static void* loadFile(const std::filesystem::path& fullpath, unsigned int& size) {
+    std::ifstream file(fullpath, std::ios::binary | std::ios::ate);
+    RUNTIME_CHECK(!!file, ("Could not open file " + fullpath.string()).c_str());
+
+    // Get file size
+    size = file.tellg();
+    file.seekg(0, std::ios::beg);
+
+    // Allocate buffer and read the file
+    void* buffer = malloc(size);
+    file.read((char*)buffer, size);
+    RUNTIME_CHECK(!!file, ("Error reading file " + fullpath.string()).c_str());
+
+    return buffer;
+}
 
 
 #if defined(__arm64__) || defined(__aarch64__)
@@ -98,10 +127,14 @@ class KHostSystem {
 
   const u8 *currentRawGhost = nullptr; // TODO: figure out lifetime
 
+#ifdef PYNOKO_BUILD_GUI
   MkwVis* mkwVis;
+#endif
 
 public:
+#ifdef PYNOKO_BUILD_GUI
   ~KHostSystem() { mkwVis->destroyWindow(); }
+#endif
 
   // call one of the following functions before init to select a mode
   void configureTimeTrial(Course course, Character character, Vehicle vehicle, bool isAuto);
@@ -132,7 +165,7 @@ void KHostSystem::configureTimeTrial(Course course, Character character, Vehicle
 void KHostSystem::configureGhost(const char* rkgFile) {
     if (currentRawGhost != nullptr) delete currentRawGhost;
     unsigned int ghostSize;
-    currentRawGhost = (u8*)bolt::util::Filesystem::loadFile(rkgFile, ghostSize);
+    currentRawGhost = (u8*)loadFile(rkgFile, ghostSize);
 
     System::RaceConfig::RegisterInitCallback([this](System::RaceConfig *config, void *arg) {
         config->setGhost(this->currentRawGhost);
@@ -153,9 +186,11 @@ void KHostSystem::init() {
 
     KeepDenormals();
 
+#ifdef PYNOKO_BUILD_GUI
     mkwVis = new MkwVis(Field::CourseColMgr::Instance()->data());
     mkwVis->createWindow(1200, 800);
     mkwVis->load();
+#endif
 }
 
 class ButtonInput {
@@ -216,10 +251,12 @@ void KHostSystem::calc() {
 
     KeepDenormals();
 
+#ifdef PYNOKO_BUILD_GUI
     mkwVis->update();
     const Kart::KartObjectProxy& proxy = kartObjectProxy();
     mkwVis->setPose(proxy.pos(), proxy.mainRot());
     mkwVis->draw();
+#endif
 }
 
 void KHostSystem::reset() {

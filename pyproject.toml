@@ -23,4 +23,5 @@ wheel.py-api = "cp312"
 [tool.scikit-build.cmake]
 args = [
     "-DCMAKE_BUILD_TYPE=Debug",
+    "-DPYNOKO_BUILD_GUI=OFF",
 ]

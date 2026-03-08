@@ -40,12 +40,17 @@ project(pynoko VERSION 1.0 LANGUAGES C CXX)
 include(cmake/CPM.cmake)
 include(GNUInstallDirs)
 
+option(PYNOKO_BUILD_GUI "Build with GUI (glfw) support" ON)
+
 set(KINOKO_USE_RTTI ON)
 CPMAddPackage("gh:em-eight/Kinoko#867dc3f")
 
 find_package(Python REQUIRED COMPONENTS Interpreter Development.Module OPTIONAL_COMPONENTS Development.SABIModule)
 find_package(nanobind CONFIG REQUIRED)
-add_subdirectory(src/libmkw EXCLUDE_FROM_ALL)
+
+if (PYNOKO_BUILD_GUI)
+    add_subdirectory(src/libmkw EXCLUDE_FROM_ALL)
+endif()
 
 set(PYNOKO_SOURCES
     src/nanobind.cpp
@@ -60,14 +65,14 @@ target_include_directories(_pynoko_impl
     PRIVATE
     src
 )
-target_link_libraries(_pynoko_impl PRIVATE libkinoko libmkw)
+target_link_libraries(_pynoko_impl PRIVATE libkinoko)
+if(PYNOKO_BUILD_GUI)
+    target_link_libraries(_pynoko_impl PRIVATE libmkw)
+    target_compile_definitions(_pynoko_impl PRIVATE PYNOKO_BUILD_GUI)
+endif()
+
 # installation directives for python wheels
-if(APPLE)
-    set_target_properties(_pynoko_impl PROPERTIES
-        INSTALL_RPATH "@loader_path"
-        BUILD_WITH_INSTALL_RPATH TRUE
-    )
-else()
+if(UNIX AND NOT APPLE)
     set_target_properties(_pynoko_impl PROPERTIES
         INSTALL_RPATH "$ORIGIN"
         BUILD_WITH_INSTALL_RPATH TRUE
