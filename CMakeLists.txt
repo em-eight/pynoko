@@ -43,7 +43,7 @@ include(GNUInstallDirs)
 option(PYNOKO_BUILD_GUI "Build with GUI (glfw) support" ON)
 
 set(KINOKO_USE_RTTI ON)
-CPMAddPackage("gh:em-eight/Kinoko#867dc3f")
+CPMAddPackage("gh:em-eight/Kinoko#9d1cff7")
 
 find_package(Python REQUIRED COMPONENTS Interpreter Development.Module OPTIONAL_COMPONENTS Development.SABIModule)
 find_package(nanobind CONFIG REQUIRED)
