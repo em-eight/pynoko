@@ -5,8 +5,12 @@
 #include "game/field/KColData.hh"
 
 #include "RaceCamera.hpp"
-#include "KclOpengl.hpp"
+#include "KclDrawable.hpp"
 
+#include "gfx/SceneManager.hpp"
+#include "gfx/RenderSystem.hpp"
+
+#include "glad/glad.h"
 #include <GLFW/glfw3.h>
 
 class MkwVis {
@@ -25,8 +29,10 @@ public:
     void destroyWindow();
 
 private:
+    bolt::gfx::SceneManager* mScene;
+    bolt::gfx::RenderSystem* mRenderSystem;
     RaceCamera* mCamera;
-    KclOpengl* mKclOgl;
+    KclDrawable* mKclDrawable;
     const Field::KColData* mKcl;
 
     GLFWwindow* mWindow;

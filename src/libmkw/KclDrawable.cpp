@@ -1,13 +1,15 @@
-#include "KclOpengl.hpp"
+#include "KclDrawable.hpp"
 #include "common.h"
 
 #include <vector>
 #include <span>
-#include "glad/glad.h"
 
 #include <egg/math/Vector.hh>
 
+#define ARRAY_SIZE(arr) (sizeof(arr) / sizeof(arr[0]))
+
 using namespace bolt;
+using namespace bolt::gfx;
 
 static EGG::Vector3f GetVertex(f32 height, const EGG::Vector3f &vertex1, const EGG::Vector3f &fnrm, const EGG::Vector3f &enrm3, const EGG::Vector3f &enrm) {
     EGG::Vector3f cross = fnrm.cross(enrm);
@@ -17,51 +19,49 @@ static EGG::Vector3f GetVertex(f32 height, const EGG::Vector3f &vertex1, const E
     return cross + vertex1;
 }
 
-KclOpengl::KclOpengl(std::span<Field::KColData::KCollisionPrism> prisms, std::span<EGG::Vector3f> vertices, std::span<EGG::Vector3f> nrms) : m_prisms(prisms), m_vertices(vertices), m_nrms(nrms) {
-    mShader = gfx::Shader(LIBMKW_RES("kcl.vert"), LIBMKW_RES("kcl.frag"));
-    mShader.use();
+static Color randomBrightColor(float minBrightness) {
+    RUNTIME_ASSERT(minBrightness < 2.0f, "minBrightness must be between 0 and 2");
+
+    Color ret;
+    ret.a = 1.0f;
+    do {
+        ret.r = static_cast<float>(rand()) / RAND_MAX;
+        ret.g = static_cast<float>(rand()) / RAND_MAX;
+        ret.b = static_cast<float>(rand()) / RAND_MAX;
+    } while (ret.r + ret.g + ret.b < minBrightness);
+
+    return ret;
+}
+
+KclDrawable::KclDrawable(std::span<Field::KColData::KCollisionPrism> prisms, std::span<EGG::Vector3f> vertices, std::span<EGG::Vector3f> nrms) : m_prisms(prisms), m_vertices(vertices), m_nrms(nrms) {
     processData();
 }
 
-void KclOpengl::load() {
-    // Generate and bind the VAO
-    glGenVertexArrays(1, &m_vao);
-    glBindVertexArray(m_vao);
+// Vertex attribute layout:
+// Attribute 0: position (3 floats) -> offset 0
+// Attribute 1: normal (3 floats) -> offset 12
+// Attribute 2: color (4 floats) -> offset 20
+static const VertexAttribute KCL_VTX_ATTR[] = {
+    {0, offsetof(KclVtx, vtx), 3, BOLT_F32, sizeof(KclVtx)}, // position
+    {1, offsetof(KclVtx, fnrm), 3, BOLT_F32, sizeof(KclVtx)},   // normal
+    {2, offsetof(KclVtx, color), 4, BOLT_F32, sizeof(KclVtx)}    // texture coordinates
+};
 
-    // Generate and bind the VBO
-    glGenBuffers(1, &m_vbo);
-    glBindBuffer(GL_ARRAY_BUFFER, m_vbo);
-    glBufferData(GL_ARRAY_BUFFER, m_triangleVertices.size() * sizeof(KclOglVtx), m_triangleVertices.data(), GL_STATIC_DRAW);
+static const ProgramDescriptor KCL_PROG_DESC = {
+    LIBMKW_RES("kcl.vert"),
+    LIBMKW_RES("kcl.frag")
+};
 
-    // Set the vertex attribute pointers
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(KclOglVtx), (void*)0);
-    glEnableVertexAttribArray(0);
-    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(KclOglVtx), (void*)(sizeof(EGG::Vector3f)));
-    glEnableVertexAttribArray(1);
-    glVertexAttribPointer(2, 4, GL_FLOAT, GL_FALSE, sizeof(KclOglVtx), (void*)(sizeof(EGG::Vector3f) + sizeof(EGG::Vector3f)));
-    glEnableVertexAttribArray(2);
-
-    // Unbind the VAO and VBO
-    glBindBuffer(GL_ARRAY_BUFFER, 0);
-    glBindVertexArray(0);
-
-    // set KCL pose (identity for course)
-    mShader.use();
-    math::Matrix44f mtx;
-    mtx.setIdentity();
-    mShader.setMat4("model", mtx);
-
-    // Camera matrices (set by Camera)
-    mShader.use();
-    unsigned int uniformIndex = glGetUniformBlockIndex(mShader.id(), "Matrices");
-    glUniformBlockBinding(mShader.id(), uniformIndex, 0);
+const VertexAttribute* KclDrawable::attributes() const {
+    return KCL_VTX_ATTR;
 }
 
-void KclOpengl::draw() {
-    mShader.use();
-    glBindVertexArray(m_vao);
-    glDrawArrays(GL_TRIANGLES, 0, m_triangleVertices.size());
-    glBindVertexArray(0);
+int KclDrawable::attributeCount() const {
+    return ARRAY_SIZE(KCL_VTX_ATTR);
+}
+
+const ProgramDescriptor& KclDrawable::programDescriptor() const {
+    return KCL_PROG_DESC;
 }
 
 const gfx::Color colorTable[] = {
@@ -86,21 +86,21 @@ const gfx::Color colorTable[] = {
     gfx::Color(0.65f, 0.4f, 0.5f, 1.0f),     // 0x11 Cannon trigger
     gfx::Color(0.65f, 0.4f, 0.5f, 1.0f),     // 0x12 Force recalculation
     gfx::Color(1.0f, 0.6f, 0.1f, 1.0f),      // 0x13 Half-pipe ramp
-    gfx::randomBrightColor(1.0f),
-    gfx::randomBrightColor(1.0f),
-    gfx::randomBrightColor(1.0f),
-    gfx::randomBrightColor(1.0f),
-    gfx::randomBrightColor(1.0f),
-    gfx::randomBrightColor(1.0f),
-    gfx::randomBrightColor(1.0f),
-    gfx::randomBrightColor(1.0f),
-    gfx::randomBrightColor(1.0f),
-    gfx::randomBrightColor(1.0f),
-    gfx::randomBrightColor(1.0f),
-    gfx::randomBrightColor(1.0f),
+    randomBrightColor(1.0f),
+    randomBrightColor(1.0f),
+    randomBrightColor(1.0f),
+    randomBrightColor(1.0f),
+    randomBrightColor(1.0f),
+    randomBrightColor(1.0f),
+    randomBrightColor(1.0f),
+    randomBrightColor(1.0f),
+    randomBrightColor(1.0f),
+    randomBrightColor(1.0f),
+    randomBrightColor(1.0f),
+    randomBrightColor(1.0f),
 };
 
-void KclOpengl::processData() {
+void KclDrawable::processData() {
     int i = 0;
     for (const auto& prism : m_prisms) {
         i++;
@@ -119,8 +119,8 @@ void KclOpengl::processData() {
         gfx::Color color = colorTable[type];
 
         // Add the vertices to the triangle list
-        m_triangleVertices.push_back(KclOglVtx(vtx1, fnrm, color));
-        m_triangleVertices.push_back(KclOglVtx(vtx2, fnrm, color));
-        m_triangleVertices.push_back(KclOglVtx(vtx3, fnrm, color));
+        m_triangleVertices.push_back(KclVtx(vtx1, fnrm, color));
+        m_triangleVertices.push_back(KclVtx(vtx2, fnrm, color));
+        m_triangleVertices.push_back(KclVtx(vtx3, fnrm, color));
     }
 }

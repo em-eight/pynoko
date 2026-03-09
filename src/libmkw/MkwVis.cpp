@@ -1,7 +1,8 @@
 #include "MkwVis.hpp"
 
 #include <GLFW/glfw3.h>
-#include "glad/glad.h"
+
+#include "gfx/opengl/OpenglRenderSystem.hpp"
 
 #include <stdio.h>
 #include <iostream>
@@ -27,7 +28,9 @@ static void key_callback(GLFWwindow* window, int key, int scancode, int action, 
 
 MkwVis::~MkwVis() {
     delete mCamera;
-    delete mKclOgl;
+    delete mKclDrawable;
+    delete mScene;
+    delete mRenderSystem;
 }
 
 void MkwVis::createWindow(int width, int height) {
@@ -46,24 +49,30 @@ void MkwVis::createWindow(int width, int height) {
     gladLoadGLLoader((GLADloadproc) glfwGetProcAddress);
 
     glfwSetKeyCallback(mWindow, key_callback);
-
-    // debug
-    glEnable(GL_DEBUG_OUTPUT);
-    //glDebugMessageCallback(openGLDebugCallback, nullptr);
-
     glfwGetFramebufferSize(mWindow, &mWidth, &mHeight);
-    glViewport(0, 0, width, height);
-    glEnable(GL_DEPTH_TEST);
+
+    // bolt setup
+    mRenderSystem = new bolt::gfx::OpenglRenderSystem;
+    mScene = new bolt::gfx::SceneManager(mRenderSystem);
+    mScene->renderSystem()->setViewport(0, 0, mWidth, mHeight);
 }
 
 void MkwVis::load() {
-    mCamera = new RaceCamera(mWidth / (float)mHeight);
-    mKclOgl = new KclOpengl(mKcl->prisms(), mKcl->vertices(), mKcl->nrms());
-    mKclOgl->load();
+    // camera
+    mCamera = new RaceCamera;
+    mCamera->setAspectRatio(mWidth / (float)mHeight);
+
+    // course KCL
+    mKclDrawable = new KclDrawable(mKcl->prisms(), mKcl->vertices(), mKcl->nrms());
+
+    gfx::SceneNode& sceneRoot = mScene->root();
+    sceneRoot.addChild(mCamera);
+    sceneRoot.addChild(mKclDrawable);
+
+    mScene->loadAll();
 }
 
 void MkwVis::setPose(const EGG::Vector3f& pos, const EGG::Quatf& rot) {
-    // same ABI
     mCamera->setPos(pos);
     mCamera->setRot(rot);
 }
@@ -76,16 +85,12 @@ void MkwVis::update() {
 }
 
 void MkwVis::draw() {
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-    mCamera->onDraw();
-    mKclOgl->draw();
+    mScene->draw(mCamera);
 
     glfwSwapBuffers(mWindow);
 }
 
 void MkwVis::destroyWindow() {
-    // TODO: destroy window
     glfwDestroyWindow(mWindow);
     glfwTerminate();
 }
