@@ -5,6 +5,7 @@
 #define DEG2RAD(deg) ((deg) * (M_PI / 180.0))
 
 using namespace bolt::math;
+using namespace Kinoko;
 
 RaceCamera::RaceCamera() : mFovy(DEG2RAD(60)), mAspectRatio(1) {
     updatePerspectiveMat();

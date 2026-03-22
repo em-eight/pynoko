@@ -15,13 +15,13 @@
 
 class MkwVis {
 public:
-    MkwVis(const Field::KColData* kcl) : mKcl(kcl) {}
+    MkwVis(const Kinoko::Field::KColData* kcl) : mKcl(kcl) {}
     ~MkwVis();
     void createWindow(int width, int height);
     // call once to load graphics
     void load();
     // update character position
-    void setPose(const EGG::Vector3f& pos, const EGG::Quatf& rot);
+    void setPose(const Kinoko::EGG::Vector3f& pos, const Kinoko::EGG::Quatf& rot);
     // call every frame to process events (e.g. clicking 'X' button)
     void update();
     // call every frame to draw
@@ -33,7 +33,7 @@ private:
     bolt::gfx::RenderSystem* mRenderSystem;
     RaceCamera* mCamera;
     KclDrawable* mKclDrawable;
-    const Field::KColData* mKcl;
+    const Kinoko::Field::KColData* mKcl;
 
     GLFWwindow* mWindow;
     int mWidth;

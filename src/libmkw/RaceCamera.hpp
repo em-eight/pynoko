@@ -10,8 +10,8 @@ public:
     RaceCamera();
 
     void setAspectRatio(float aspectRatio) override { mAspectRatio = aspectRatio; updatePerspectiveMat(); }
-    void setPos(const EGG::Vector3f& pos);
-    void setRot(const EGG::Quatf& pos);
+    void setPos(const Kinoko::EGG::Vector3f& pos);
+    void setRot(const Kinoko::EGG::Quatf& pos);
 
 private:
     void updatePerspectiveMat() { mProjection.setPerspective(mFovy, mAspectRatio, 1, 25000); }

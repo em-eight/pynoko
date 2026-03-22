@@ -43,6 +43,7 @@
 namespace nb = nanobind;
 using namespace nb::literals;
 
+using namespace Kinoko;
 using namespace System;
 using namespace Host;
 

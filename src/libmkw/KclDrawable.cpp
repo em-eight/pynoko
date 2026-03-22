@@ -10,6 +10,7 @@
 
 using namespace bolt;
 using namespace bolt::gfx;
+using namespace Kinoko;
 
 static EGG::Vector3f GetVertex(f32 height, const EGG::Vector3f &vertex1, const EGG::Vector3f &fnrm, const EGG::Vector3f &enrm3, const EGG::Vector3f &enrm) {
     EGG::Vector3f cross = fnrm.cross(enrm);
@@ -33,7 +34,7 @@ static Color randomBrightColor(float minBrightness) {
     return ret;
 }
 
-KclDrawable::KclDrawable(std::span<Field::KColData::KCollisionPrism> prisms, std::span<EGG::Vector3f> vertices, std::span<EGG::Vector3f> nrms) : m_prisms(prisms), m_vertices(vertices), m_nrms(nrms) {
+KclDrawable::KclDrawable(std::span<const Field::KColData::KCollisionPrism> prisms, std::span<const EGG::Vector3f> vertices, std::span<const EGG::Vector3f> nrms) : m_prisms(prisms), m_vertices(vertices), m_nrms(nrms) {
     processData();
 }
 
