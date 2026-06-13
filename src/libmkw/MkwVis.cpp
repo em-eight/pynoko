@@ -4,27 +4,14 @@
 
 #include "gfx/opengl/OpenglRenderSystem.hpp"
 
+#include <cstdlib>
 #include <stdio.h>
-#include <iostream>
 
 using namespace bolt;
 using namespace Kinoko;
 
-void error_callback(int error, const char* description) {
+static void error_callback(int error, const char* description) {
     fprintf(stderr, "Error: %s\n", description);
-}
-
-void GLAPIENTRY openGLDebugCallback(GLenum source, GLenum type, GLuint id,
-                                    GLenum severity, GLsizei length,
-                                    const GLchar *message, const void *userParam) {
-    std::cerr << "OpenGL Debug Message: " << message << std::endl;
-    exit(-1);
-}
-
-static void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods)
-{
-    if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS)
-        glfwSetWindowShouldClose(window, GLFW_TRUE);
 }
 
 MkwVis::~MkwVis() {
@@ -32,6 +19,8 @@ MkwVis::~MkwVis() {
     delete mKclDrawable;
     delete mScene;
     delete mRenderSystem;
+    delete mFramebuffer;
+    free(mFrameBufferData);
 }
 
 void MkwVis::createWindow(int width, int height) {
@@ -41,6 +30,9 @@ void MkwVis::createWindow(int width, int height) {
 
     glfwSetErrorCallback(error_callback);
 
+    // hidden window, used only to host an OpenGL context for offscreen rendering
+    glfwWindowHint(GLFW_VISIBLE, GLFW_FALSE);
+
     mWindow = glfwCreateWindow(width, height, "mkw", NULL, NULL);
     if (!mWindow) {
         fprintf(stderr, "Failed to create glfw window\n");
@@ -49,13 +41,16 @@ void MkwVis::createWindow(int width, int height) {
     glfwMakeContextCurrent(mWindow);
     gladLoadGLLoader((GLADloadproc) glfwGetProcAddress);
 
-    glfwSetKeyCallback(mWindow, key_callback);
     glfwGetFramebufferSize(mWindow, &mWidth, &mHeight);
 
     // bolt setup
     mRenderSystem = new bolt::gfx::OpenglRenderSystem;
     mScene = new bolt::gfx::SceneManager(mRenderSystem);
     mScene->renderSystem()->setViewport(0, 0, mWidth, mHeight);
+
+    mFramebuffer = new bolt::gfx::OpenglFramebuffer(mWidth, mHeight);
+    mFramebuffer->use();
+    mFrameBufferData = malloc(mFramebuffer->bufferSize());
 }
 
 void MkwVis::load() {
@@ -78,17 +73,9 @@ void MkwVis::setPose(const EGG::Vector3f& pos, const EGG::Quatf& rot) {
     mCamera->setRot(rot);
 }
 
-void MkwVis::update() {
-    glfwPollEvents();
-    if (glfwWindowShouldClose(mWindow)) {
-        destroyWindow();
-    }
-}
-
 void MkwVis::draw() {
     mScene->draw(mCamera);
-
-    glfwSwapBuffers(mWindow);
+    mFramebuffer->readBuffer(mFrameBufferData);
 }
 
 void MkwVis::destroyWindow() {

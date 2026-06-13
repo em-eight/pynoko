@@ -21,7 +21,7 @@ cmake --build build
 ```
 
 ## Build and install wheel
-Physics engine only. Wheel builds currently do not support GUI visualization.
+Physics engine only. Wheel builds currently do not support rendering/visualization.
 ```
 pip install .
 ```

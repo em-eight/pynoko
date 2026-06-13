@@ -1,4 +1,5 @@
 import argparse
+import cv2
 import pynoko
 
 def main(args):
@@ -15,6 +16,11 @@ def main(args):
         mkw.calc()
         print(mkw.kartObjectProxy())
         print(mkw.raceCompletion())
+
+        # the rendered frame is a packed RGB float image (origin at the bottom-left);
+        # flip vertically and reverse channels to BGR for OpenCV
+        cv2.imshow("mkw", mkw.getFrame()[::-1, :, ::-1])
+        cv2.waitKey(1)
     mkw.reset()
     print("MKW race reset")
 

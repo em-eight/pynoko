@@ -27,7 +27,7 @@
 #include <fstream>
 #include <iostream>
 
-#ifdef PYNOKO_BUILD_GUI
+#ifdef PYNOKO_RENDER
 #include "libmkw/MkwVis.hpp"
 #include "util/Filesystem.hpp"
 #endif
@@ -128,20 +128,29 @@ class KHostSystem {
 
   const u8 *currentRawGhost = nullptr; // TODO: figure out lifetime
 
-#ifdef PYNOKO_BUILD_GUI
+#ifdef PYNOKO_RENDER
   MkwVis* mkwVis;
 #endif
 
 public:
-#ifdef PYNOKO_BUILD_GUI
+#ifdef PYNOKO_RENDER
   ~KHostSystem() { mkwVis->destroyWindow(); }
+
+  using FrameNumpy = nb::ndarray<float, nb::numpy, nb::shape<-1, -1, 3>>;
+  // packed RGB image of the last drawn frame, updated every calc()
+  FrameNumpy getFrame();
 #endif
 
   // call one of the following functions before init to select a mode
   void configureTimeTrial(Course course, Character character, Vehicle vehicle, bool isAuto);
   void configureGhost(const char* rkgFile);
 
+#ifdef PYNOKO_RENDER
+  // width/height set the size of the offscreen framebuffer used for visualization
+  void init(int width = 1200, int height = 800);
+#else
   void init();
+#endif
   bool setInput(u16 buttons, u8 stickXRaw, u8 stickYRaw, Trick trick);
   void calc();
   void reset();
@@ -174,7 +183,11 @@ void KHostSystem::configureGhost(const char* rkgFile) {
     }, nullptr);
 }
 
+#ifdef PYNOKO_RENDER
+void KHostSystem::init(int width, int height) {
+#else
 void KHostSystem::init() {
+#endif
     FlushDenormalsToZero();
 
     auto *sceneCreator = new SceneCreatorDynamic;
@@ -187,9 +200,9 @@ void KHostSystem::init() {
 
     KeepDenormals();
 
-#ifdef PYNOKO_BUILD_GUI
+#ifdef PYNOKO_RENDER
     mkwVis = new MkwVis(Field::CourseColMgr::Instance()->data());
-    mkwVis->createWindow(1200, 800);
+    mkwVis->createWindow(width, height);
     mkwVis->load();
 #endif
 }
@@ -252,13 +265,19 @@ void KHostSystem::calc() {
 
     KeepDenormals();
 
-#ifdef PYNOKO_BUILD_GUI
-    mkwVis->update();
+#ifdef PYNOKO_RENDER
     const Kart::KartObjectProxy& proxy = kartObjectProxy();
     mkwVis->setPose(proxy.pos(), proxy.mainRot());
     mkwVis->draw();
 #endif
 }
+
+#ifdef PYNOKO_RENDER
+KHostSystem::FrameNumpy KHostSystem::getFrame() {
+    return FrameNumpy(mkwVis->getFrameBuffer(),
+                       { (size_t)mkwVis->height(), (size_t)mkwVis->width(), 3 });
+}
+#endif
 
 void KHostSystem::reset() {
     FlushDenormalsToZero();
@@ -683,7 +702,12 @@ NB_MODULE(PYNOKO_MODULE_NAME, m) {
         .def(nb::init<>())
         .def("configureTimeTrial", &KHostSystem::configureTimeTrial)
         .def("configureGhost", &KHostSystem::configureGhost)
+#ifdef PYNOKO_RENDER
+        .def("init", &KHostSystem::init, nb::arg("width") = 1200, nb::arg("height") = 800)
+        .def("getFrame", &KHostSystem::getFrame, nb::rv_policy::reference_internal)
+#else
         .def("init", &KHostSystem::init)
+#endif
         .def("setInput", &KHostSystem::setInput)
         .def("calc", &KHostSystem::calc)
         .def("reset", &KHostSystem::reset)

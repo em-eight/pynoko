@@ -16,7 +16,7 @@ endif()
 include(cmake/CPM.cmake)
 include(GNUInstallDirs)
 
-option(PYNOKO_BUILD_GUI "Build with GUI (glfw) support" ON)
+option(PYNOKO_RENDER "Build with offscreen framebuffer rendering support" ON)
 
 set(KINOKO_USE_RTTI ON)
 CPMAddPackage("gh:em-eight/Kinoko#d1f5a1b")
@@ -31,7 +31,7 @@ else()
     find_package(nanobind CONFIG REQUIRED)
 endif()
 
-if (PYNOKO_BUILD_GUI)
+if (PYNOKO_RENDER)
     add_subdirectory(src/libmkw EXCLUDE_FROM_ALL)
 endif()
 
@@ -55,9 +55,9 @@ target_include_directories(${PYNOKO_MODULE_NAME}
     src
 )
 target_link_libraries(${PYNOKO_MODULE_NAME} PRIVATE libkinoko)
-if(PYNOKO_BUILD_GUI)
+if(PYNOKO_RENDER)
     target_link_libraries(${PYNOKO_MODULE_NAME} PRIVATE libmkw)
-    target_compile_definitions(${PYNOKO_MODULE_NAME} PRIVATE PYNOKO_BUILD_GUI)
+    target_compile_definitions(${PYNOKO_MODULE_NAME} PRIVATE PYNOKO_RENDER)
 endif()
 target_compile_definitions(${PYNOKO_MODULE_NAME} PRIVATE PYNOKO_MODULE_NAME=${PYNOKO_MODULE_NAME})
 
