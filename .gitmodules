@@ -1,9 +1,6 @@
 [submodule "extern/nanobind"]
 	path = extern/nanobind
 	url = https://github.com/wjakob/nanobind
-[submodule "src/libmkw/extern/glfw"]
-	path = src/libmkw/extern/glfw
-	url = https://github.com/glfw/glfw.git
 [submodule "src/libmkw/extern/bolt"]
 	path = src/libmkw/extern/bolt
 	url = https://github.com/Thodoris1999/bolt

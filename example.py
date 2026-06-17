@@ -17,9 +17,9 @@ def main(args):
         print(mkw.kartObjectProxy())
         print(mkw.raceCompletion())
 
-        # the rendered frame is a packed RGB float image (origin at the bottom-left);
-        # flip vertically and reverse channels to BGR for OpenCV
-        cv2.imshow("mkw", mkw.getFrame()[::-1, :, ::-1])
+        # the rendered frame is a packed RGBA8 image (origin at the top-left);
+        # drop alpha and reverse to BGR for OpenCV
+        cv2.imshow("mkw", mkw.getFrame()[:, :, 2::-1])
         cv2.waitKey(1)
     mkw.reset()
     print("MKW race reset")

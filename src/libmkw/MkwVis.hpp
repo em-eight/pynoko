@@ -8,44 +8,38 @@
 #include "KclDrawable.hpp"
 
 #include "gfx/SceneManager.hpp"
-#include "gfx/RenderSystem.hpp"
-#include "gfx/opengl/OpenglFramebuffer.hpp"
-
-#include "glad/glad.h"
-#include <GLFW/glfw3.h>
+#include "gfx/vulkan/VulkanRenderSystem.hpp"
 
 class MkwVis {
 public:
     MkwVis(const Kinoko::Field::KColData* kcl) : mKcl(kcl) {}
     ~MkwVis();
-    // Creates a hidden window to host an OpenGL context, and an offscreen framebuffer of size
-    // width x height that draw() renders into and getFrameBuffer() reads back from.
-    void createWindow(int width, int height);
+    // Creates a headless Vulkan render system with an offscreen target of size width x height
+    // that draw() renders into and getFrameBuffer() reads back from.
+    void create(int width, int height);
     // call once to load graphics
     void load();
     // update character position
     void setPose(const Kinoko::EGG::Vector3f& pos, const Kinoko::EGG::Quatf& rot);
     // call every frame to draw
     void draw();
-    void destroyWindow();
+    void destroy();
 
     int width() const { return mWidth; }
     int height() const { return mHeight; }
     // size in bytes of the buffer returned by getFrameBuffer()
-    int frameBufferSize() const { return mFramebuffer->bufferSize(); }
-    // packed RGB floats of the last drawn frame, updated by draw()
-    void* getFrameBuffer() const { return mFrameBufferData; }
+    int frameBufferSize() const { return mWidth * mHeight * 4; }
+    // packed RGBA8 pixels of the last drawn frame, updated by draw(); owned by the render system,
+    // valid until the next draw() call
+    void* getFrameBuffer() const { return mRenderSystem->getFrameBuffer(); }
 
 private:
     bolt::gfx::SceneManager* mScene;
-    bolt::gfx::RenderSystem* mRenderSystem;
-    bolt::gfx::OpenglFramebuffer* mFramebuffer;
+    bolt::gfx::VulkanRenderSystem* mRenderSystem;
     RaceCamera* mCamera;
     KclDrawable* mKclDrawable;
     const Kinoko::Field::KColData* mKcl;
 
-    GLFWwindow* mWindow;
     int mWidth;
     int mHeight;
-    void* mFrameBufferData;
 };

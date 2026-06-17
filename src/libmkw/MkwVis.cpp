@@ -1,56 +1,20 @@
 #include "MkwVis.hpp"
 
-#include <GLFW/glfw3.h>
-
-#include "gfx/opengl/OpenglRenderSystem.hpp"
-
-#include <cstdlib>
-#include <stdio.h>
-
 using namespace bolt;
 using namespace Kinoko;
 
-static void error_callback(int error, const char* description) {
-    fprintf(stderr, "Error: %s\n", description);
-}
-
 MkwVis::~MkwVis() {
-    delete mCamera;
-    delete mKclDrawable;
-    delete mScene;
-    delete mRenderSystem;
-    delete mFramebuffer;
-    free(mFrameBufferData);
+    destroy();
 }
 
-void MkwVis::createWindow(int width, int height) {
-    if (!glfwInit()) {
-        fprintf(stderr, "Failed to init glfw\n");
-    }
+void MkwVis::create(int width, int height) {
+    mWidth = width;
+    mHeight = height;
 
-    glfwSetErrorCallback(error_callback);
+    mRenderSystem = new bolt::gfx::VulkanRenderSystem(mWidth, mHeight);
+    mRenderSystem->init();
 
-    // hidden window, used only to host an OpenGL context for offscreen rendering
-    glfwWindowHint(GLFW_VISIBLE, GLFW_FALSE);
-
-    mWindow = glfwCreateWindow(width, height, "mkw", NULL, NULL);
-    if (!mWindow) {
-        fprintf(stderr, "Failed to create glfw window\n");
-    }
-
-    glfwMakeContextCurrent(mWindow);
-    gladLoadGLLoader((GLADloadproc) glfwGetProcAddress);
-
-    glfwGetFramebufferSize(mWindow, &mWidth, &mHeight);
-
-    // bolt setup
-    mRenderSystem = new bolt::gfx::OpenglRenderSystem;
     mScene = new bolt::gfx::SceneManager(mRenderSystem);
-    mScene->renderSystem()->setViewport(0, 0, mWidth, mHeight);
-
-    mFramebuffer = new bolt::gfx::OpenglFramebuffer(mWidth, mHeight);
-    mFramebuffer->use();
-    mFrameBufferData = malloc(mFramebuffer->bufferSize());
 }
 
 void MkwVis::load() {
@@ -75,10 +39,12 @@ void MkwVis::setPose(const EGG::Vector3f& pos, const EGG::Quatf& rot) {
 
 void MkwVis::draw() {
     mScene->draw(mCamera);
-    mFramebuffer->readBuffer(mFrameBufferData);
+    mRenderSystem->readFramebuffer();
 }
 
-void MkwVis::destroyWindow() {
-    glfwDestroyWindow(mWindow);
-    glfwTerminate();
+void MkwVis::destroy() {
+    delete mCamera; mCamera = nullptr;
+    delete mKclDrawable; mKclDrawable = nullptr;
+    delete mScene; mScene = nullptr;
+    delete mRenderSystem; mRenderSystem = nullptr;
 }

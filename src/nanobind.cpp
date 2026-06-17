@@ -134,10 +134,10 @@ class KHostSystem {
 
 public:
 #ifdef PYNOKO_RENDER
-  ~KHostSystem() { mkwVis->destroyWindow(); }
+  ~KHostSystem() { mkwVis->destroy(); }
 
-  using FrameNumpy = nb::ndarray<float, nb::numpy, nb::shape<-1, -1, 3>>;
-  // packed RGB image of the last drawn frame, updated every calc()
+  using FrameNumpy = nb::ndarray<uint8_t, nb::numpy, nb::shape<-1, -1, 4>>;
+  // packed RGBA8 image of the last drawn frame, updated every calc()
   FrameNumpy getFrame();
 #endif
 
@@ -202,7 +202,7 @@ void KHostSystem::init() {
 
 #ifdef PYNOKO_RENDER
     mkwVis = new MkwVis(Field::CourseColMgr::Instance()->data());
-    mkwVis->createWindow(width, height);
+    mkwVis->create(width, height);
     mkwVis->load();
 #endif
 }
@@ -275,7 +275,7 @@ void KHostSystem::calc() {
 #ifdef PYNOKO_RENDER
 KHostSystem::FrameNumpy KHostSystem::getFrame() {
     return FrameNumpy(mkwVis->getFrameBuffer(),
-                       { (size_t)mkwVis->height(), (size_t)mkwVis->width(), 3 });
+                       { (size_t)mkwVis->height(), (size_t)mkwVis->width(), 4 });
 }
 #endif
 
