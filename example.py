@@ -5,7 +5,7 @@ import pynoko
 def main(args):
     mkw = pynoko.KHostSystem()
     mkw.configureTimeTrial(pynoko.Course.Bowsers_Castle, pynoko.Character.Funky_Kong, pynoko.Vehicle.Flame_Runner, False)
-    mkw.configureGhost(args.ghost)
+    mkw.configureGhost(args.ghost) # Configures input from ghost. Otherwise input passed to setInput will be used
     mkw.init()
     print("MKW initialized")
     buttons = pynoko.buttonInput([pynoko.KPAD_BUTTON_A])
