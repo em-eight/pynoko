@@ -31,7 +31,7 @@ jobs:
         if: matrix.os == 'ubuntu-latest'
         run: |
           sudo apt update
-          sudo apt install -y ninja-build python3-dev
+          sudo apt install -y ninja-build python3-dev libvulkan-dev glslc spirv-cross spirv-headers
 
           if [ "${{ matrix.compiler }}" = "gcc" ]; then
             sudo apt install -y gcc g++
@@ -58,15 +58,16 @@ jobs:
             mingw-w64-x86_64-cmake
             mingw-w64-x86_64-ninja
             mingw-w64-x86_64-python
+            mingw-w64-x86_64-vulkan-devel
+            mingw-w64-x86_64-shaderc
+            mingw-w64-x86_64-spirv-cross
 
       - name: Configure (Linux)
         if: matrix.os == 'ubuntu-latest'
         run: |
           cmake -S . -B build \
             -G Ninja \
-            -DCMAKE_BUILD_TYPE=Release \
-            -DGLFW_BUILD_WAYLAND=OFF \
-            -DGLFW_BUILD_X11=OFF
+            -DCMAKE_BUILD_TYPE=Release
 
       - name: Build (Linux)
         if: matrix.os == 'ubuntu-latest'
