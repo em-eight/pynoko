@@ -268,6 +268,7 @@ void KHostSystem::calc() {
 #ifdef PYNOKO_RENDER
     const Kart::KartObjectProxy& proxy = kartObjectProxy();
     mkwVis->setPose(proxy.pos(), proxy.mainRot());
+    mkwVis->calc();
     mkwVis->draw();
 #endif
 }

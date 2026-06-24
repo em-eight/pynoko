@@ -19,7 +19,7 @@ include(GNUInstallDirs)
 option(PYNOKO_RENDER "Build with offscreen framebuffer rendering support" ON)
 
 set(KINOKO_USE_RTTI ON)
-CPMAddPackage("gh:em-eight/Kinoko#0b1fe9d")
+CPMAddPackage("gh:em-eight/Kinoko#c5fa74a")
 
 if (NOT SKBUILD)
     # local build
