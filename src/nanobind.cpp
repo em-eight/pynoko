@@ -137,6 +137,7 @@ public:
   ~KHostSystem() { mkwVis->destroy(); }
 
   using FrameNumpy = nb::ndarray<uint8_t, nb::numpy, nb::shape<-1, -1, 4>>;
+  void draw();
   // packed RGBA8 image of the last drawn frame, updated every calc()
   FrameNumpy getFrame();
 #endif
@@ -264,16 +265,16 @@ void KHostSystem::calc() {
     m_sceneMgr->calc();
 
     KeepDenormals();
+}
 
 #ifdef PYNOKO_RENDER
+void KHostSystem::draw() {
     const Kart::KartObjectProxy& proxy = kartObjectProxy();
     mkwVis->setPose(proxy.pos(), proxy.mainRot());
     mkwVis->calc();
     mkwVis->draw();
-#endif
 }
 
-#ifdef PYNOKO_RENDER
 KHostSystem::FrameNumpy KHostSystem::getFrame() {
     return FrameNumpy(mkwVis->getFrameBuffer(),
                        { (size_t)mkwVis->height(), (size_t)mkwVis->width(), 4 });
@@ -705,6 +706,7 @@ NB_MODULE(PYNOKO_MODULE_NAME, m) {
         .def("configureGhost", &KHostSystem::configureGhost)
 #ifdef PYNOKO_RENDER
         .def("init", &KHostSystem::init, nb::arg("width") = 1200, nb::arg("height") = 800)
+        .def("draw", &KHostSystem::draw)
         .def("getFrame", &KHostSystem::getFrame, nb::rv_policy::reference_internal)
 #else
         .def("init", &KHostSystem::init)
