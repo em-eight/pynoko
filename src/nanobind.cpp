@@ -121,7 +121,7 @@ struct HeapManager {
 };
 
 class KHostSystem {
-  EGG::SceneManager *m_sceneMgr;
+  EGG::SceneManager *m_sceneMgr = nullptr;
   HeapManager heapMgr;
   u16 buttonsPrev;
   bool inDrift;
@@ -133,9 +133,19 @@ class KHostSystem {
 #endif
 
 public:
+  ~KHostSystem() {
+    if (m_sceneMgr) {
+        while (m_sceneMgr->currentScene()) {
+            m_sceneMgr->destroyScene(m_sceneMgr->currentScene());
+        }
+        delete m_sceneMgr;
+    }
 #ifdef PYNOKO_RENDER
-  ~KHostSystem() { mkwVis->destroy(); }
+    mkwVis->destroy();
+#endif
+  }
 
+#ifdef PYNOKO_RENDER
   using FrameNumpy = nb::ndarray<uint8_t, nb::numpy, nb::shape<-1, -1, 4>>;
   void draw();
   // packed RGBA8 image of the last drawn frame, updated every calc()
